@@ -119,11 +119,11 @@ main { max-width: 640px; margin: 0 auto; padding: 0 20px 60px; }
   line-height: 1.25;
 }
 
-/* ===== Sub-service grid (category detail) ===== */
-.subservice-view { padding: 24px 0; }
+/* ===== Grouped item menu (category detail) ===== */
+.menu-view { padding: 24px 0; }
 .category-header {
   display: flex; align-items: center; gap: 12px;
-  margin: 4px 0 20px;
+  margin: 4px 0 22px;
 }
 .category-icon-lg {
   width: 46px; height: 46px;
@@ -136,27 +136,44 @@ main { max-width: 640px; margin: 0 auto; padding: 0 20px 60px; }
 .category-icon-lg svg { width: 24px; height: 24px; }
 .category-header h2 { font-family: var(--serif); color: var(--plum); margin: 0; font-size: 22px; }
 
-.subservice-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
-}
-.subservice-tile {
-  background: white;
-  border: 1px solid var(--border);
-  border-top: 2px solid var(--gold);
-  border-radius: 10px;
-  padding: 16px 14px;
-  cursor: pointer;
-}
-.subservice-tile:active { background: rgba(199,123,135,0.08); }
-.subservice-tile h4 {
+.menu-group { margin-bottom: 28px; }
+.menu-group-title {
   font-family: var(--serif);
   font-size: 15px;
-  color: var(--plum);
+  color: var(--gold);
+  letter-spacing: 0.02em;
   margin: 0 0 4px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--gold);
 }
-.subservice-tile .price { font-size: 13px; color: var(--muted); }
+.menu-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 13px 0;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+}
+.menu-item:last-child { border-bottom: none; }
+.menu-item-name { font-size: 15px; color: var(--ink); }
+.price-field {
+  display: flex; align-items: center; gap: 2px;
+  flex-shrink: 0;
+}
+.price-field .rupee { font-size: 14px; color: var(--muted); }
+.price-input {
+  width: 68px;
+  padding: 6px 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 14px;
+  text-align: right;
+  background: white;
+  color: var(--plum);
+}
+.price-input::placeholder { color: var(--muted); font-size: 12px; }
+.price-input:focus { outline: 2px solid var(--rose); outline-offset: 1px; }
 
 .muted { color: var(--muted); }
 

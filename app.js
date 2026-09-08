@@ -146,7 +146,24 @@ function renderHome() {
   });
 }
 
-// ---- Category: sub-service grid ----
+// ---- Category: grouped itemized menu ----
+function getStoredPrice(itemId) {
+  const raw = localStorage.getItem("glambook_prices");
+  const prices = raw ? JSON.parse(raw) : {};
+  return Object.prototype.hasOwnProperty.call(prices, itemId) ? prices[itemId] : null;
+}
+function setStoredPrice(itemId, price) {
+  const raw = localStorage.getItem("glambook_prices");
+  const prices = raw ? JSON.parse(raw) : {};
+  if (price === null) delete prices[itemId];
+  else prices[itemId] = price;
+  localStorage.setItem("glambook_prices", JSON.stringify(prices));
+}
+function effectivePrice(item) {
+  const stored = getStoredPrice(item.id);
+  return stored !== null ? stored : item.price;
+}
+
 function renderCategory() {
   const cat = state.selectedCategory;
   if (!cat) { location.hash = "#/home"; return; }
@@ -158,18 +175,47 @@ function renderCategory() {
   document.getElementById("categoryIconLg").innerHTML = cat.icon;
   document.getElementById("categoryName").textContent = cat.name;
 
-  const grid = document.getElementById("subserviceGrid");
-  grid.innerHTML = cat.subservices.map(s => `
-    <div class="subservice-tile" data-sub="${s.id}">
-      <h4>${escapeHtml(s.name)}</h4>
-      <div class="price">${s.price ? "₹" + s.price : "Price on request"}</div>
+  const wrap = document.getElementById("menuGroups");
+  wrap.innerHTML = cat.groups.map(group => `
+    <div class="menu-group">
+      ${cat.groups.length > 1 || group.name !== cat.name ? `<h3 class="menu-group-title">${escapeHtml(group.name)}</h3>` : ""}
+      ${group.items.map(item => `
+        <div class="menu-item" data-item="${item.id}">
+          <span class="menu-item-name">${escapeHtml(item.name)}</span>
+          <span class="price-field">
+            <span class="rupee">₹</span>
+            <input class="price-input" type="number" min="0" inputmode="numeric"
+              data-price-for="${item.id}"
+              placeholder="Set price"
+              value="${effectivePrice(item) ?? ""}">
+          </span>
+        </div>
+      `).join("")}
     </div>
   `).join("");
 
-  grid.querySelectorAll(".subservice-tile").forEach(tile => {
-    tile.addEventListener("click", () => {
-      const sub = cat.subservices.find(s => s.id === tile.dataset.sub);
-      state.selectedService = { id: sub.id, name: sub.name, price: sub.price, duration: sub.duration, mode: sub.mode, categoryName: cat.name };
+  // Editing price: stop the row-click (which would navigate to booking)
+  wrap.querySelectorAll(".price-input").forEach(input => {
+    input.addEventListener("click", (e) => e.stopPropagation());
+    input.addEventListener("change", () => {
+      const val = input.value === "" ? null : Number(input.value);
+      setStoredPrice(input.dataset.priceFor, val);
+    });
+  });
+
+  // Tapping the row (not the price field) goes to booking
+  wrap.querySelectorAll(".menu-item").forEach(row => {
+    row.addEventListener("click", () => {
+      const group = cat.groups.find(g => g.items.some(i => i.id === row.dataset.item));
+      const item = group.items.find(i => i.id === row.dataset.item);
+      state.selectedService = {
+        id: item.id,
+        name: item.name,
+        price: effectivePrice(item),
+        duration: item.duration || "",
+        mode: item.mode || "both",
+        categoryName: cat.name,
+      };
       state.bookingMode = null;
       state.selectedTime = null;
       location.hash = "#/book";

@@ -1,11 +1,13 @@
 // categories-config.js
 // ============================================================
-// This is where the service catalog lives: main categories
-// (shown as icons on the home screen) and the sub-services
-// under each (shown when a category is tapped).
+// Service catalog: main categories (icons on the home screen).
+// Tapping a category goes straight to its itemized menu —
+// grouped sections, each with individual services.
 //
-// Add price/duration once you've finalized them — leave price
-// as null and it'll show "Price on request" instead of ₹0.
+// Prices are NOT set here — they start blank ("Price on
+// request") and get filled in directly in the app via the
+// inline price field on each item. Set a number here only if
+// you want a default to ship with.
 // ============================================================
 
 const icon = {
@@ -17,70 +19,123 @@ const icon = {
   body: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c-4 3-6 5-6 9a6 6 0 0 0 12 0c0-4-2-6-6-9Z"/><path d="M12 12c1.5 1.5 1.5 3.5 0 5"/></svg>`,
 };
 
+// mode: "home" | "salon" | "both" — controls which booking-location
+// options show up for that item. Defaults to "both" if omitted.
+
 export const categories = [
   {
     id: "hair",
     name: "Hair Services",
     icon: icon.hair,
-    subservices: [
-      { id: "haircut-styling", name: "Haircut & Styling", price: null, duration: "", mode: "both" },
-      { id: "hair-coloring", name: "Hair Coloring", price: null, duration: "", mode: "salon" },
-      { id: "highlights", name: "Highlights", price: null, duration: "", mode: "salon" },
-      { id: "straightening-rebonding", name: "Straightening & Rebonding", price: null, duration: "", mode: "salon" },
-      { id: "hair-spa", name: "Hair Spa", price: null, duration: "", mode: "both" },
+    groups: [
+      {
+        name: "Hair Cut",
+        items: [
+          { id: "hair-cut", name: "Hair Cut", price: null },
+          { id: "layer-cut", name: "Layer Cut", price: null },
+          { id: "trims", name: "Trims", price: null },
+          { id: "blow-drying", name: "Blow Drying", price: null },
+          { id: "straightening", name: "Straightening", price: null },
+          { id: "setting", name: "Setting", price: null },
+          { id: "styling", name: "Styling", price: null },
+        ],
+      },
+      {
+        name: "Hair Colouring",
+        items: [
+          { id: "global-hair-colouring", name: "Global Hair Colouring", price: null, mode: "salon" },
+          { id: "root-touch-ups", name: "Root Touch-Ups", price: null, mode: "salon" },
+          { id: "highlights", name: "Highlights", price: null, mode: "salon" },
+        ],
+      },
+      {
+        name: "Hair Treatment",
+        items: [
+          { id: "hair-spa", name: "Hair Spa", price: null },
+          { id: "deep-conditioning", name: "Deep Conditioning", price: null },
+          { id: "keratin", name: "Keratin", price: null, mode: "salon" },
+          { id: "smoothing", name: "Smoothing", price: null, mode: "salon" },
+          { id: "rebonding", name: "Rebonding", price: null, mode: "salon" },
+        ],
+      },
     ],
   },
   {
     id: "skin",
     name: "Skincare & Facials",
     icon: icon.skin,
-    subservices: [
-      { id: "clean-up", name: "Clean-up", price: null, duration: "", mode: "both" },
-      { id: "de-tan", name: "De-tan Treatment", price: null, duration: "", mode: "both" },
-      { id: "hydrating-facial", name: "Hydrating Facial", price: null, duration: "", mode: "both" },
-      { id: "brightening-facial", name: "Brightening Facial", price: null, duration: "", mode: "both" },
-      { id: "anti-aging-facial", name: "Anti-Aging Facial", price: null, duration: "", mode: "both" },
+    groups: [
+      {
+        name: "Skincare & Facials",
+        items: [
+          { id: "clean-up", name: "Clean-up", price: null },
+          { id: "de-tan", name: "De-tan Treatment", price: null },
+          { id: "hydrating-facial", name: "Hydrating Facial", price: null },
+          { id: "brightening-facial", name: "Brightening Facial", price: null },
+          { id: "anti-aging-facial", name: "Anti-Aging Facial", price: null },
+        ],
+      },
     ],
   },
   {
     id: "grooming",
     name: "Grooming & Hair Removal",
     icon: icon.grooming,
-    subservices: [
-      { id: "eyebrow-threading", name: "Eyebrow Threading", price: null, duration: "", mode: "both" },
-      { id: "upper-lip-waxing", name: "Upper Lip Waxing", price: null, duration: "", mode: "both" },
-      { id: "full-body-waxing", name: "Full-Body Waxing", price: null, duration: "", mode: "both" },
+    groups: [
+      {
+        name: "Grooming & Hair Removal",
+        items: [
+          { id: "eyebrow-threading", name: "Eyebrow Threading", price: null },
+          { id: "upper-lip-waxing", name: "Upper Lip Waxing", price: null },
+          { id: "full-body-waxing", name: "Full-Body Waxing", price: null },
+        ],
+      },
     ],
   },
   {
     id: "hands-feet",
     name: "Hands & Feet",
     icon: icon.hands,
-    subservices: [
-      { id: "manicure", name: "Manicure", price: null, duration: "", mode: "both" },
-      { id: "pedicure", name: "Pedicure", price: null, duration: "", mode: "both" },
-      { id: "gel-polish", name: "Gel Polish", price: null, duration: "", mode: "both" },
-      { id: "hand-foot-spa", name: "Hand & Foot Spa", price: null, duration: "", mode: "both" },
+    groups: [
+      {
+        name: "Hands & Feet",
+        items: [
+          { id: "manicure", name: "Manicure", price: null },
+          { id: "pedicure", name: "Pedicure", price: null },
+          { id: "gel-polish", name: "Gel Polish", price: null },
+          { id: "hand-foot-spa", name: "Hand & Foot Spa", price: null },
+        ],
+      },
     ],
   },
   {
     id: "makeup",
     name: "Special Occasion Makeup",
     icon: icon.makeup,
-    subservices: [
-      { id: "party-makeup", name: "Party Makeup", price: null, duration: "", mode: "both" },
-      { id: "engagement-makeup", name: "Engagement Makeup", price: null, duration: "", mode: "both" },
-      { id: "bridal-package", name: "Bridal Package", price: null, duration: "", mode: "both" },
+    groups: [
+      {
+        name: "Special Occasion Makeup",
+        items: [
+          { id: "party-makeup", name: "Party Makeup", price: null },
+          { id: "engagement-makeup", name: "Engagement Makeup", price: null },
+          { id: "bridal-package", name: "Bridal Package", price: null },
+        ],
+      },
     ],
   },
   {
     id: "body",
     name: "Body Treatments",
     icon: icon.body,
-    subservices: [
-      { id: "body-polishing", name: "Body Polishing", price: null, duration: "", mode: "salon" },
-      { id: "exfoliating-scrub", name: "Exfoliating Scrub", price: null, duration: "", mode: "salon" },
-      { id: "body-wrap", name: "Body Wrap", price: null, duration: "", mode: "salon" },
+    groups: [
+      {
+        name: "Body Treatments",
+        items: [
+          { id: "body-polishing", name: "Body Polishing", price: null, mode: "salon" },
+          { id: "exfoliating-scrub", name: "Exfoliating Scrub", price: null, mode: "salon" },
+          { id: "body-wrap", name: "Body Wrap", price: null, mode: "salon" },
+        ],
+      },
     ],
   },
 ];
