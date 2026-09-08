@@ -6,14 +6,24 @@ This is built as a **product you resell**, not a one-off app: one codebase, resk
 
 ## How the app is organized
 - **Home screen** — parlour logo, name, contact number at top; a grid of main service category icons below.
-- **Category screen** — tapping a category shows its sub-services as a second icon grid.
-- **Booking flow** — tapping a sub-service opens the booking form (choose home/salon, date, time of day, contact details).
-- Admin panel (`/#/admin`) currently manages **bookings only** — confirm/cancel. Editing the service catalog is done in `categories-config.js` directly for now; we can move that into the admin panel once the catalog structure is finalized.
+- **Category screen** — tapping a category goes straight to its itemized menu: grouped sections (e.g. under Hair Services: Hair Cut, Hair Colouring, Hair Treatment), each listing individual services with an inline price field.
+- **Prices** — anyone can type a price directly into the field next to each service; no login needed. ⚠️ **Important limitation right now:** prices are saved to `localStorage`, meaning they only persist on the device that entered them. If you set a price on your phone, a customer opening the app on their phone won't see it — they'll see "Set price" blank again. This is fine for demoing the UI to a parlour owner, but before real customers use it, prices need to move to Firestore (shared, cross-device) instead. Flag this to me when you're ready for that step.
+- **Booking flow** — tapping a service row (not the price field) opens the booking form (choose home/salon, date, time of day, contact details).
+- **Admin panel** (`/#/admin`) — six sections:
+  - **Bookings** — confirm/cancel customer booking requests (Firestore, shared/cloud).
+  - **Client Details** — save clients (name, code, mobile, birthday, anniversary). Stored only on this device (`localStorage`) — won't show up if you open the admin panel on a different phone.
+  - **Special Discount** — set festival/anniversary discount text (e.g. "10%" or "₹200"), stored locally, for your own reference.
+  - **Client History** — look up a client by code, see their saved details and past bills.
+  - **Bill Generation** — enter a client code, services taken, and total; saves to that client's history and can send the bill via WhatsApp or SMS.
+  - **Reminder** — write a message and send it to a client (by mobile or code) via WhatsApp or SMS.
+
+### About the "Send" buttons (WhatsApp/SMS)
+A plain web app can't silently auto-send SMS or WhatsApp messages — there's no browser permission for that without a paid gateway (Twilio for SMS, WhatsApp Business API for WhatsApp, both needing a backend server and per-message cost). What's built instead: tapping **Send via WhatsApp** or **Send via SMS** opens that app with your message pre-typed to the client's number — one more tap in WhatsApp/Messages actually sends it. If you want true one-tap-from-GlamBook silent sending later, that's a real feature but needs a paid API integration — let me know if you want to go there.
 
 ## Selling to a new parlour — checklist
 For each new client, touch only these:
 1. **`brand-config.js`** — app name, tagline, contact info, colors, logo. This is the only file with the "look" of the app.
-2. **`categories-config.js`** — the service catalog: main categories (icons on the home screen) and sub-services under each. Prices can be left blank ("Price on request") until finalized.
+2. **`categories-config.js`** — the service catalog: main categories, their groups, and items under each. Prices can be left blank ("Set price") and filled in live in the app.
 3. **`firebase-config.js`** — a fresh Firebase project per client (don't share one client's data with another).
 4. **`manifest.json`** — update `name`, `short_name`, `background_color`, `theme_color` to match. (Can't be driven by `brand-config.js` — the browser reads this file before any JS runs.)
 5. **`icon-192.png` / `icon-512.png`** — the client's logo, or a placeholder mark if they don't have one yet.

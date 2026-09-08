@@ -269,18 +269,53 @@ main { max-width: 640px; margin: 0 auto; padding: 0 20px 60px; }
 
 /* ===== Admin ===== */
 .admin-view { padding: 24px 0; }
-.admin-tabs { display: flex; gap: 8px; margin-bottom: 20px; }
-.admin-tab {
-  background: none; border: 1px solid var(--border); padding: 8px 16px;
-  border-radius: 999px; font-size: 13px; cursor: pointer; color: var(--muted);
+.admin-view h2 { font-family: var(--serif); color: var(--plum); margin: 4px 0 20px; font-size: 22px; }
+.admin-subheading { font-family: var(--serif); color: var(--plum); font-size: 16px; margin: 24px 0 10px; }
+
+.admin-menu {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
 }
-.admin-tab.active { background: var(--plum); border-color: var(--plum); color: var(--ivory); }
+.admin-menu-btn {
+  background: white;
+  border: 1px solid var(--border);
+  border-top: 2px solid var(--gold);
+  border-radius: 12px;
+  padding: 20px 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--plum);
+  text-align: center;
+}
+.admin-menu-btn:active { background: rgba(199,123,135,0.08); }
+.admin-menu-icon {
+  width: 40px; height: 40px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 999px;
+  background: rgba(199,123,135,0.12);
+  color: var(--rose-dark);
+}
+.admin-menu-icon svg { width: 20px; height: 20px; }
+
+.admin-list-row {
+  border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px;
+  margin-bottom: 10px; background: white;
+  display: flex; justify-content: space-between; align-items: center; gap: 12px;
+}
+.admin-list-row strong { font-family: var(--serif); color: var(--plum); }
+
 .admin-service-row, .admin-booking-row {
   border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px;
   margin-bottom: 10px; background: white;
 }
 .admin-row-top { display: flex; justify-content: space-between; align-items: center; }
-.admin-actions { display: flex; gap: 8px; margin-top: 8px; }
+.admin-actions { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
 .small-btn {
   border: 1px solid var(--border); background: white; padding: 5px 12px;
   border-radius: 6px; font-size: 12px; cursor: pointer;

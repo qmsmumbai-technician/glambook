@@ -54,6 +54,8 @@ const state = {
   selectedTime: null,
   isAdmin: false,
   adminUser: null,
+  adminSubroute: null,
+  editingClientCode: null,
 };
 
 const app = document.getElementById("app");
@@ -77,6 +79,12 @@ window.addEventListener("hashchange", () => {
     const catId = hash.split("/")[1];
     state.selectedCategory = categories.find(c => c.id === catId) || null;
     setRoute("category");
+  } else if (hash.startsWith("admin/")) {
+    state.adminSubroute = hash.split("/")[1];
+    setRoute("admin");
+  } else if (hash === "admin") {
+    state.adminSubroute = null;
+    setRoute("admin");
   } else {
     setRoute(hash);
   }
@@ -411,23 +419,340 @@ async function renderAdmin() {
   const tpl = document.getElementById("tpl-admin");
   app.innerHTML = "";
   app.appendChild(tpl.content.cloneNode(true));
-  renderAdminBookings();
+
+  const sub = state.adminSubroute;
+  if (!sub) renderAdminDashboard();
+  else if (sub === "bookings") renderAdminBookings();
+  else if (sub === "clients") renderAdminClients();
+  else if (sub === "discount") renderAdminDiscount();
+  else if (sub === "history") renderAdminHistory();
+  else if (sub === "bill") renderAdminBill();
+  else if (sub === "reminder") renderAdminReminder();
+}
+
+function renderAdminDashboard() {
+  const content = document.getElementById("adminContent");
+  content.innerHTML = `
+    <h2>Admin Panel</h2>
+    <div class="admin-menu">
+      <button class="admin-menu-btn" data-route="admin/bookings">
+        <span class="admin-menu-icon">${icons.bookings}</span>
+        <span>Bookings</span>
+      </button>
+      <button class="admin-menu-btn" data-route="admin/clients">
+        <span class="admin-menu-icon">${icons.client}</span>
+        <span>Client Details</span>
+      </button>
+      <button class="admin-menu-btn" data-route="admin/discount">
+        <span class="admin-menu-icon">${icons.discount}</span>
+        <span>Special Discount</span>
+      </button>
+      <button class="admin-menu-btn" data-route="admin/history">
+        <span class="admin-menu-icon">${icons.history}</span>
+        <span>Client History</span>
+      </button>
+      <button class="admin-menu-btn" data-route="admin/bill">
+        <span class="admin-menu-icon">${icons.bill}</span>
+        <span>Bill Generation</span>
+      </button>
+      <button class="admin-menu-btn" data-route="admin/reminder">
+        <span class="admin-menu-icon">${icons.reminder}</span>
+        <span>Reminder</span>
+      </button>
+    </div>
+    <p class="fine-print" style="margin-top:20px">Client details, discounts, bills, and reminders are stored only on this device — they won't appear if you open the admin panel on a different phone.</p>
+  `;
+}
+
+const icons = {
+  bookings: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5" width="16" height="16" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/></svg>`,
+  client: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c1.5-4 4.5-6 7-6s5.5 2 7 6"/></svg>`,
+  discount: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12 12 4h8v8l-8 8-8-8Z"/><circle cx="14.5" cy="9.5" r="1.2" fill="currentColor" stroke="none"/></svg>`,
+  history: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h13a3 3 0 0 1 3 3v11H7a3 3 0 0 1-3-3V5Z"/><path d="M8 9h8M8 13h5"/></svg>`,
+  bill: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2V3Z"/><path d="M9 8h6M9 12h6"/></svg>`,
+  reminder: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a5 5 0 0 0-5 5v3.5L5 15h14l-2-3.5V8a5 5 0 0 0-5-5Z"/><path d="M9.5 19a2.5 2.5 0 0 0 5 0"/></svg>`,
+};
+
+// ===== Local CRM storage (device-only) =====
+function getClients() { return JSON.parse(localStorage.getItem("glambook_clients") || "{}"); }
+function saveClientRecord(client) {
+  const clients = getClients();
+  clients[client.clientCode] = client;
+  localStorage.setItem("glambook_clients", JSON.stringify(clients));
+}
+function deleteClientRecord(code) {
+  const clients = getClients();
+  delete clients[code];
+  localStorage.setItem("glambook_clients", JSON.stringify(clients));
+}
+function getClient(code) { return getClients()[code] || null; }
+
+function getDiscounts() { return JSON.parse(localStorage.getItem("glambook_discounts") || "{}"); }
+function saveDiscounts(d) { localStorage.setItem("glambook_discounts", JSON.stringify(d)); }
+
+function getBills() { return JSON.parse(localStorage.getItem("glambook_bills") || "[]"); }
+function saveBillRecord(bill) {
+  const bills = getBills();
+  bills.push(bill);
+  localStorage.setItem("glambook_bills", JSON.stringify(bills));
+}
+function getBillsForClient(code) {
+  return getBills().filter(b => b.clientCode === code).sort((a, b) => (a.date < b.date ? 1 : -1));
+}
+
+// ===== Send helpers: opens WhatsApp / SMS with the message pre-filled =====
+// True silent auto-send isn't possible from a plain web app without a paid
+// gateway (Twilio for SMS, WhatsApp Business API) — this is the closest
+// equivalent: one tap in the native app to actually send.
+function normalizeIndianMobile(raw) {
+  const digits = (raw || "").replace(/\D/g, "");
+  if (digits.length === 10) return "91" + digits;
+  return digits;
+}
+function sendViaWhatsApp(mobile, message) {
+  const num = normalizeIndianMobile(mobile);
+  if (!num) return toast("Enter a valid mobile number first");
+  window.open(`https://wa.me/${num}?text=${encodeURIComponent(message)}`, "_blank");
+}
+function sendViaSMS(mobile, message) {
+  if (!mobile) return toast("Enter a valid mobile number first");
+  window.location.href = `sms:${mobile}?body=${encodeURIComponent(message)}`;
+}
+
+// ---- 1. Client Details ----
+function renderAdminClients() {
+  const content = document.getElementById("adminContent");
+  const editing = state.editingClientCode ? getClient(state.editingClientCode) : null;
+
+  content.innerHTML = `
+    <button class="back-btn" data-route="admin">&larr; Admin Panel</button>
+    <h2>Client Details</h2>
+    <div class="field-group"><label>Name of Client</label><input id="cName" value="${editing ? escapeHtml(editing.name) : ""}"></div>
+    <div class="field-group"><label>Client Code</label><input id="cCode" placeholder="e.g. CL001" value="${editing ? escapeHtml(editing.clientCode) : ""}" ${editing ? "disabled" : ""}></div>
+    <div class="field-group"><label>Mobile Number</label><input id="cMobile" type="tel" value="${editing ? escapeHtml(editing.mobile) : ""}"></div>
+    <div class="field-group"><label>Birth Date</label><input id="cBirth" type="date" value="${editing ? editing.birthDate || "" : ""}"></div>
+    <div class="field-group"><label>Wedding Anniversary Date</label><input id="cAnniv" type="date" value="${editing ? editing.anniversaryDate || "" : ""}"></div>
+    <button class="primary-btn" id="saveClientBtn">${editing ? "Update Client" : "Save Client"}</button>
+    ${editing ? `<button class="small-btn danger" id="cancelEditBtn" style="margin-top:8px">Cancel edit</button>` : ""}
+    <h3 class="admin-subheading">Saved Clients</h3>
+    <div id="clientListWrap"></div>
+  `;
+
+  renderClientList();
+
+  document.getElementById("saveClientBtn").addEventListener("click", () => {
+    const name = document.getElementById("cName").value.trim();
+    const clientCode = document.getElementById("cCode").value.trim();
+    const mobile = document.getElementById("cMobile").value.trim();
+    const birthDate = document.getElementById("cBirth").value;
+    const anniversaryDate = document.getElementById("cAnniv").value;
+
+    if (!name || !clientCode) return toast("Name and Client Code are required");
+    if (!editing && getClient(clientCode)) return toast("That Client Code already exists");
+
+    saveClientRecord({ name, clientCode, mobile, birthDate, anniversaryDate });
+    toast(editing ? "Client updated" : "Client saved");
+    state.editingClientCode = null;
+    renderAdminClients();
+  });
+
+  const cancelBtn = document.getElementById("cancelEditBtn");
+  if (cancelBtn) cancelBtn.addEventListener("click", () => {
+    state.editingClientCode = null;
+    renderAdminClients();
+  });
+}
+
+function renderClientList() {
+  const wrap = document.getElementById("clientListWrap");
+  const clients = Object.values(getClients());
+  if (clients.length === 0) {
+    wrap.innerHTML = `<p class="muted">No clients saved yet.</p>`;
+    return;
+  }
+  wrap.innerHTML = clients.map(c => `
+    <div class="admin-list-row" data-code="${escapeHtml(c.clientCode)}">
+      <div>
+        <strong>${escapeHtml(c.name)}</strong>
+        <p class="muted">${escapeHtml(c.clientCode)} · ${escapeHtml(c.mobile || "no number")}</p>
+      </div>
+      <div class="admin-actions">
+        <button class="small-btn" data-edit="${escapeHtml(c.clientCode)}">Edit</button>
+        <button class="small-btn danger" data-del="${escapeHtml(c.clientCode)}">Delete</button>
+      </div>
+    </div>
+  `).join("");
+
+  wrap.querySelectorAll("[data-edit]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      state.editingClientCode = btn.dataset.edit;
+      renderAdminClients();
+    });
+  });
+  wrap.querySelectorAll("[data-del]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      if (!confirm("Delete this client?")) return;
+      deleteClientRecord(btn.dataset.del);
+      toast("Client deleted");
+      renderClientList();
+    });
+  });
+}
+
+// ---- 2. Special Discount ----
+function renderAdminDiscount() {
+  const content = document.getElementById("adminContent");
+  const d = getDiscounts();
+  content.innerHTML = `
+    <button class="back-btn" data-route="admin">&larr; Admin Panel</button>
+    <h2>Special Discount</h2>
+    <div class="field-group"><label>Festival Discount</label><input id="dFestival" placeholder="e.g. 10% or ₹200" value="${escapeHtml(d.festivalDiscount || "")}"></div>
+    <div class="field-group"><label>Client Anniversary Discount</label><input id="dAnniv" placeholder="e.g. 15% or ₹300" value="${escapeHtml(d.clientAnniversaryDiscount || "")}"></div>
+    <button class="primary-btn" id="saveDiscountBtn">Save</button>
+  `;
+  document.getElementById("saveDiscountBtn").addEventListener("click", () => {
+    saveDiscounts({
+      festivalDiscount: document.getElementById("dFestival").value.trim(),
+      clientAnniversaryDiscount: document.getElementById("dAnniv").value.trim(),
+    });
+    toast("Discounts saved");
+  });
+}
+
+// ---- 3. Client History ----
+function renderAdminHistory() {
+  const content = document.getElementById("adminContent");
+  content.innerHTML = `
+    <button class="back-btn" data-route="admin">&larr; Admin Panel</button>
+    <h2>Client History</h2>
+    <div class="field-group"><label>Enter Client Code</label><input id="hCode" placeholder="e.g. CL001"></div>
+    <button class="primary-btn" id="searchHistoryBtn">Search</button>
+    <div id="historyResult" style="margin-top:20px"></div>
+  `;
+  document.getElementById("searchHistoryBtn").addEventListener("click", () => {
+    const code = document.getElementById("hCode").value.trim();
+    const result = document.getElementById("historyResult");
+    const client = getClient(code);
+    if (!client) { result.innerHTML = `<p class="muted">No client found with that code.</p>`; return; }
+
+    const bills = getBillsForClient(code);
+    result.innerHTML = `
+      <div class="admin-list-row">
+        <div>
+          <strong>${escapeHtml(client.name)}</strong>
+          <p class="muted">${escapeHtml(client.mobile || "")}</p>
+          <p class="muted">Birthday: ${client.birthDate || "—"} · Anniversary: ${client.anniversaryDate || "—"}</p>
+        </div>
+      </div>
+      <h3 class="admin-subheading">Visit History</h3>
+      ${bills.length === 0 ? `<p class="muted">No bills recorded yet.</p>` : bills.map(b => `
+        <div class="admin-list-row">
+          <div>
+            <strong>₹${b.totalAmount}</strong>
+            <p class="muted">${b.date}</p>
+            <p class="muted">${escapeHtml(b.servicesTaken)}</p>
+          </div>
+        </div>
+      `).join("")}
+    `;
+  });
+}
+
+// ---- 4. Bill Generation ----
+function renderAdminBill() {
+  const content = document.getElementById("adminContent");
+  content.innerHTML = `
+    <button class="back-btn" data-route="admin">&larr; Admin Panel</button>
+    <h2>Bill Generation</h2>
+    <div class="field-group"><label>Client Code</label><input id="bCode" placeholder="e.g. CL001"></div>
+    <p class="fine-print" id="bClientPreview"></p>
+    <div class="field-group"><label>Services Taken</label><textarea id="bServices" rows="3" placeholder="e.g. Haircut, Hair Spa"></textarea></div>
+    <div class="field-group"><label>Total Amount (₹)</label><input id="bAmount" type="number" min="0"></div>
+    <button class="primary-btn" id="saveBillBtn">Save Bill</button>
+    <div class="admin-actions" style="margin-top:12px">
+      <button class="small-btn" id="sendBillWhatsApp">Send via WhatsApp</button>
+      <button class="small-btn" id="sendBillSMS">Send via SMS</button>
+    </div>
+  `;
+
+  const codeInput = document.getElementById("bCode");
+  codeInput.addEventListener("input", () => {
+    const c = getClient(codeInput.value.trim());
+    document.getElementById("bClientPreview").textContent = c ? `${c.name} · ${c.mobile || "no number on file"}` : "";
+  });
+
+  function billMessage() {
+    const services = document.getElementById("bServices").value.trim();
+    const amount = document.getElementById("bAmount").value;
+    return `Hi! Here's your bill from ${brand.appName}:\n${services}\nTotal: ₹${amount}\nThank you for visiting!`;
+  }
+  function resolvedMobile() {
+    const c = getClient(codeInput.value.trim());
+    return c ? c.mobile : "";
+  }
+
+  document.getElementById("saveBillBtn").addEventListener("click", () => {
+    const clientCode = codeInput.value.trim();
+    const servicesTaken = document.getElementById("bServices").value.trim();
+    const totalAmount = document.getElementById("bAmount").value;
+    if (!clientCode) return toast("Enter a Client Code");
+    if (!servicesTaken || !totalAmount) return toast("Services and amount are required");
+
+    saveBillRecord({ clientCode, servicesTaken, totalAmount, date: new Date().toISOString().split("T")[0] });
+    toast("Bill saved");
+  });
+
+  document.getElementById("sendBillWhatsApp").addEventListener("click", () => sendViaWhatsApp(resolvedMobile(), billMessage()));
+  document.getElementById("sendBillSMS").addEventListener("click", () => sendViaSMS(resolvedMobile(), billMessage()));
+}
+
+// ---- 5. Reminder ----
+function renderAdminReminder() {
+  const content = document.getElementById("adminContent");
+  content.innerHTML = `
+    <button class="back-btn" data-route="admin">&larr; Admin Panel</button>
+    <h2>Reminder</h2>
+    <div class="field-group"><label>Client Mobile</label><input id="rMobile" type="tel" placeholder="10-digit number"></div>
+    <p class="muted" style="text-align:center;margin:4px 0">— or —</p>
+    <div class="field-group"><label>Client Code</label><input id="rCode" placeholder="e.g. CL001"></div>
+    <div class="field-group"><label>Write a Statement</label><textarea id="rMessage" rows="3" placeholder="e.g. It's time for your monthly hair spa!"></textarea></div>
+    <div class="admin-actions">
+      <button class="small-btn" id="sendReminderWhatsApp">Send via WhatsApp</button>
+      <button class="small-btn" id="sendReminderSMS">Send via SMS</button>
+    </div>
+  `;
+
+  function resolvedMobile() {
+    const direct = document.getElementById("rMobile").value.trim();
+    if (direct) return direct;
+    const code = document.getElementById("rCode").value.trim();
+    const c = getClient(code);
+    return c ? c.mobile : "";
+  }
+
+  document.getElementById("sendReminderWhatsApp").addEventListener("click", () => {
+    sendViaWhatsApp(resolvedMobile(), document.getElementById("rMessage").value.trim());
+  });
+  document.getElementById("sendReminderSMS").addEventListener("click", () => {
+    sendViaSMS(resolvedMobile(), document.getElementById("rMessage").value.trim());
+  });
 }
 
 async function renderAdminBookings() {
   const content = document.getElementById("adminContent");
-  content.innerHTML = `<p class="muted">Loading…</p>`;
+  const backHtml = `<button class="back-btn" data-route="admin">&larr; Admin Panel</button><h2>Bookings</h2>`;
+  content.innerHTML = backHtml + `<p class="muted">Loading…</p>`;
 
   const snap = await getDocs(collection(db, "bookings"));
   const bookings = snap.docs.map(d => ({ id: d.id, ...d.data() }))
     .sort((a, b) => (a.date < b.date ? 1 : -1));
 
   if (bookings.length === 0) {
-    content.innerHTML = `<p class="muted">No bookings yet.</p>`;
+    content.innerHTML = backHtml + `<p class="muted">No bookings yet.</p>`;
     return;
   }
 
-  content.innerHTML = bookings.map(b => `
+  content.innerHTML = backHtml + bookings.map(b => `
     <div class="admin-booking-row">
       <div class="admin-row-top">
         <strong>${escapeHtml(b.serviceName)}</strong>
