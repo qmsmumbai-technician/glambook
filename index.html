@@ -118,28 +118,16 @@
       <label for="loginPhone">Phone number</label>
       <input type="tel" id="loginPhone" placeholder="10-digit mobile number">
     </div>
+    <div class="field-group">
+      <label for="loginPin">PIN <span class="muted">(owner only — leave blank as a customer)</span></label>
+      <input type="password" id="loginPin" inputmode="numeric" placeholder="••••">
+    </div>
     <button class="primary-btn" id="loginConfirmBtn">Continue</button>
-    <p class="fine-print">No OTP for now — this just remembers your bookings on this device.</p>
+    <p class="fine-print">No OTP for customers — this just remembers your bookings on this device.</p>
   </section>
 </template>
 
 <!-- ===== Admin ===== -->
-
-<template id="tpl-admin-login">
-  <section class="login-view">
-    <h2>Owner sign in</h2>
-    <div class="field-group">
-      <label for="adminEmail">Email</label>
-      <input type="email" id="adminEmail">
-    </div>
-    <div class="field-group">
-      <label for="adminPassword">Password</label>
-      <input type="password" id="adminPassword">
-    </div>
-    <button class="primary-btn" id="adminLoginBtn">Sign in</button>
-    <p class="error" id="adminLoginError"></p>
-  </section>
-</template>
 
 <template id="tpl-admin">
   <section class="admin-view">

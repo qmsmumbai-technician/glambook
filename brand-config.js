@@ -22,6 +22,28 @@ export const brand = {
   contactPhone: "",
   contactAddress: "",
 
+  // ============================================================
+  // ADMIN ACCESS — enter this phone + PIN on the Sign In screen
+  // to reach the Admin Panel instead of the customer view.
+  // Keep `phone` here DIFFERENT from contactPhone above, since
+  // contactPhone is shown publicly in the header.
+  //
+  // firebaseEmail/firebasePassword must match a real user you
+  // created in Firebase Console → Authentication → Users — the
+  // PIN below is just a friendlier front door; Firestore's actual
+  // security still runs on that Firebase login underneath.
+  //
+  // Note: since this whole app is plain client-side code, someone
+  // technical enough to view page source could find this PIN. It
+  // keeps ordinary customers out, but isn't a strong lock.
+  // ============================================================
+  adminAccess: {
+    phone: "9999999999",
+    pin: "1234",
+    firebaseEmail: "owner@example.com",
+    firebasePassword: "REPLACE_WITH_REAL_PASSWORD",
+  },
+
   colors: {
     primary: "#2E1520",     // header, headings, primary UI
     primaryLight: "#4A2536",

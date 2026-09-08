@@ -5,7 +5,7 @@ import {
   collection, doc, addDoc, getDocs, query, where, updateDoc
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import {
-  signInWithEmailAndPassword, onAuthStateChanged
+  signInWithEmailAndPassword, onAuthStateChanged, signOut
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
 // ===== Apply branding (the whole point of brand-config.js) =====
@@ -374,15 +374,35 @@ async function renderBookings() {
   });
 }
 
-// ---- Customer login (phone only, no OTP yet) ----
+// ---- Customer / owner login (phone number, or phone+PIN for admin) ----
 function renderLogin() {
   const tpl = document.getElementById("tpl-login");
   app.innerHTML = "";
   app.appendChild(tpl.content.cloneNode(true));
 
-  document.getElementById("loginConfirmBtn").addEventListener("click", () => {
+  document.getElementById("loginConfirmBtn").addEventListener("click", async () => {
     const phone = document.getElementById("loginPhone").value.trim();
+    const pin = document.getElementById("loginPin").value.trim();
     if (!/^\d{10}$/.test(phone)) return toast("Please enter a valid 10-digit phone number");
+
+    const admin = brand.adminAccess;
+    if (admin && phone === admin.phone && pin && pin === admin.pin) {
+      const btn = document.getElementById("loginConfirmBtn");
+      btn.disabled = true;
+      btn.textContent = "Signing in…";
+      try {
+        await signInWithEmailAndPassword(auth, admin.firebaseEmail, admin.firebasePassword);
+        toast("Welcome back");
+        location.hash = "#/admin";
+      } catch (err) {
+        console.error(err);
+        toast("Admin sign-in failed — check firebaseEmail/firebasePassword in brand-config.js");
+        btn.disabled = false;
+        btn.textContent = "Continue";
+      }
+      return;
+    }
+
     localStorage.setItem("glambook_phone", phone);
     toast("Signed in");
     location.hash = "#/bookings";
@@ -394,23 +414,9 @@ function renderAdminGate() {
   onAuthStateChanged(auth, (user) => {
     state.adminUser = user;
     if (user) renderAdmin();
-    else renderAdminLogin();
-  });
-}
-
-function renderAdminLogin() {
-  const tpl = document.getElementById("tpl-admin-login");
-  app.innerHTML = "";
-  app.appendChild(tpl.content.cloneNode(true));
-
-  document.getElementById("adminLoginBtn").addEventListener("click", async () => {
-    const email = document.getElementById("adminEmail").value.trim();
-    const pw = document.getElementById("adminPassword").value;
-    try {
-      await signInWithEmailAndPassword(auth, email, pw);
-      renderAdmin();
-    } catch (err) {
-      document.getElementById("adminLoginError").textContent = "Sign-in failed. Check your email/password.";
+    else {
+      toast("Sign in with your phone + PIN from the home screen to access Admin");
+      location.hash = "#/login";
     }
   });
 }
@@ -461,7 +467,13 @@ function renderAdminDashboard() {
       </button>
     </div>
     <p class="fine-print" style="margin-top:20px">Client details, discounts, bills, and reminders are stored only on this device — they won't appear if you open the admin panel on a different phone.</p>
+    <button class="small-btn danger" id="adminSignOutBtn" style="margin-top:16px">Sign out of Admin</button>
   `;
+  document.getElementById("adminSignOutBtn").addEventListener("click", async () => {
+    await signOut(auth);
+    toast("Signed out");
+    location.hash = "#/home";
+  });
 }
 
 const icons = {

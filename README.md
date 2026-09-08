@@ -35,8 +35,11 @@ Nothing else needs to change — routing, booking logic, and the admin panel are
 1. Go to console.firebase.google.com → Create project (or reuse an existing one).
 2. Add a Web app → copy the config object into `firebase-config.js`, replacing the placeholders.
 3. Enable **Firestore Database** (start in production mode).
-4. Enable **Authentication → Email/Password** — this is for YOU (the owner), to log into `/admin`. Add yourself as a user under Authentication → Users.
-5. Firestore → Rules → paste in the contents of `firestore.rules`. Read the note at the bottom before you rely on it for real customer data.
+4. Enable **Authentication → Email/Password** → Users → add one user (any email/password — this is never shown to customers). Copy that email + password into `brand-config.js` under `adminAccess.firebaseEmail` / `firebasePassword`.
+5. In `brand-config.js`, also set `adminAccess.phone` (a private number, different from the public `contactPhone`) and `adminAccess.pin` (a PIN you'll remember). Entering that exact phone + PIN on the app's Sign In screen opens the Admin Panel.
+6. Firestore → Rules → paste in the contents of `firestore.rules`. Read the note at the bottom before you rely on it for real customer data.
+
+**How Admin sign-in actually works:** typing your `adminAccess.phone` + `adminAccess.pin` on the Sign In screen silently logs you into Firebase using the email/password from step 4, then takes you to `/#/admin`. The PIN is just a friendlier front door — Firestore's real security still runs on that Firebase login underneath. Since this is all client-side code, someone who inspects the page source could technically find the PIN, so don't treat it as strong security — it's there to stop casual customers from wandering into Admin, not to stop a determined attacker.
 
 ## 2. Deploy to GitHub Pages
 1. Create a new GitHub repo, push all these files to it.
