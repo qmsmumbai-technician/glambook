@@ -12,7 +12,7 @@ This is a **private, single-user app** for you (the parlour owner) — not a cus
    - **Client Details** — save clients (name, code, mobile, birthday, anniversary).
    - **Special Discount** — festival / anniversary discount notes, for your own reference.
    - **Client History** — look up a client by code, see their saved bills.
-   - **Bill Generation** — log a bill against a client code, then send it via WhatsApp or SMS.
+   - **Bill Generation** — enter a client code, tick every service the customer took from the full checklist (grouped the same way as the home menu), watch the total build live. Add a discount ("10%" or "₹200") if you're giving one — final total updates as you type. Save it, or tap Confirm & Send to save and open WhatsApp/SMS with the itemized bill ready to send. The checklist starts blank every time you open this screen — nothing carries over between customers.
    - **Reminder** — write a message and send it to a client (by mobile or code) via WhatsApp or SMS.
    - **Backup & Restore** — export everything to a `.json` file you can save elsewhere; restore from that file if you ever switch phones or lose data.
 

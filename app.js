@@ -573,6 +573,7 @@ function renderPanelHistory() {
             <strong>₹${b.totalAmount}</strong>
             <p class="muted">${b.date}</p>
             <p class="muted">${escapeHtml(b.servicesTaken)}</p>
+            ${b.discount ? `<p class="muted">Discount applied: ${escapeHtml(b.discount)}</p>` : ""}
           </div>
         </div>
       `).join("")}
@@ -583,49 +584,135 @@ function renderPanelHistory() {
 // ---- Bill Generation ----
 function renderPanelBill() {
   const content = document.getElementById("panelContent");
+
+  const checklistHtml = categories.map(cat => `
+    <div class="bill-cat-block">
+      <h4 class="bill-cat-title">${escapeHtml(cat.name)}</h4>
+      ${cat.groups.map(g => `
+        ${g.name && g.name !== cat.name ? `<p class="bill-group-title">${escapeHtml(g.name)}</p>` : ""}
+        ${g.items.map(item => {
+          const price = effectivePrice(item);
+          return `
+            <label class="bill-item-row">
+              <input type="checkbox" class="bill-check" data-id="${item.id}" data-price="${price ?? 0}" data-name="${escapeHtml(item.name)}">
+              <span class="bill-item-name">${escapeHtml(item.name)}</span>
+              <span class="bill-item-price">${price ? "₹" + price : "—"}</span>
+            </label>
+          `;
+        }).join("")}
+      `).join("")}
+    </div>
+  `).join("");
+
   content.innerHTML = `
     <button class="back-btn" data-route="panel">&larr; Panel</button>
     <h2>Bill Generation</h2>
     <div class="field-group"><label>Client Code</label><input id="bCode" placeholder="e.g. CL001"></div>
     <p class="fine-print" id="bClientPreview"></p>
-    <div class="field-group"><label>Services Taken</label><textarea id="bServices" rows="3" placeholder="e.g. Haircut, Hair Spa"></textarea></div>
-    <div class="field-group"><label>Total Amount (₹)</label><input id="bAmount" type="number" min="0"></div>
+
+    <h3 class="admin-subheading">Tick services taken</h3>
+    <div id="billChecklist">${checklistHtml}</div>
+
+    <div class="bill-summary">
+      <div class="bill-summary-row"><span>Subtotal</span><span id="billSubtotal">₹0</span></div>
+      <div class="field-group">
+        <label>Discount</label>
+        <input id="billDiscount" placeholder="e.g. 10% or ₹200">
+      </div>
+      <div class="bill-summary-row bill-final"><span>Final Total</span><span id="billFinalTotal">₹0</span></div>
+    </div>
+
     <button class="primary-btn" id="saveBillBtn">Save Bill</button>
     <div class="admin-actions" style="margin-top:12px">
-      <button class="small-btn" id="sendBillWhatsApp">Send via WhatsApp</button>
-      <button class="small-btn" id="sendBillSMS">Send via SMS</button>
+      <button class="small-btn" id="sendBillWhatsApp">Confirm &amp; Send via WhatsApp</button>
+      <button class="small-btn" id="sendBillSMS">Confirm &amp; Send via SMS</button>
     </div>
   `;
 
   const codeInput = document.getElementById("bCode");
+  const discountInput = document.getElementById("billDiscount");
+  let saved = false;
+
   codeInput.addEventListener("input", () => {
+    saved = false;
     const c = getClient(codeInput.value.trim());
     document.getElementById("bClientPreview").textContent = c ? `${c.name} · ${c.mobile || "no number on file"}` : "";
   });
 
-  function billMessage() {
-    const services = document.getElementById("bServices").value.trim();
-    const amount = document.getElementById("bAmount").value;
-    return `Hi! Here's your bill from ${brand.appName}:\n${services}\nTotal: ₹${amount}\nThank you for visiting!`;
+  function computeTotals() {
+    const checked = [...document.querySelectorAll(".bill-check:checked")];
+    const subtotal = checked.reduce((sum, c) => sum + Number(c.dataset.price || 0), 0);
+
+    const raw = discountInput.value.trim();
+    let discountAmount = 0;
+    if (raw.endsWith("%")) {
+      const pct = parseFloat(raw);
+      if (!isNaN(pct)) discountAmount = (subtotal * pct) / 100;
+    } else if (raw) {
+      const flat = parseFloat(raw.replace(/[^\d.]/g, ""));
+      if (!isNaN(flat)) discountAmount = flat;
+    }
+
+    const final = Math.max(0, Math.round(subtotal - discountAmount));
+    document.getElementById("billSubtotal").textContent = "₹" + subtotal;
+    document.getElementById("billFinalTotal").textContent = "₹" + final;
+    return { checked, subtotal, discountAmount, final, raw };
+  }
+
+  document.querySelectorAll(".bill-check").forEach(cb => {
+    cb.addEventListener("change", () => { saved = false; computeTotals(); });
+  });
+  discountInput.addEventListener("input", () => { saved = false; computeTotals(); });
+  computeTotals();
+
+  function billMessage(totals) {
+    const lines = totals.checked.map(c => `- ${c.dataset.name}: ₹${c.dataset.price}`).join("\n");
+    const discountLine = totals.discountAmount ? `\nDiscount: -₹${Math.round(totals.discountAmount)}` : "";
+    return `Hi! Here's your bill from ${brand.appName}:\n${lines}\nSubtotal: ₹${totals.subtotal}${discountLine}\nFinal Total: ₹${totals.final}\nThank you for visiting!`;
   }
   function resolvedMobile() {
     const c = getClient(codeInput.value.trim());
     return c ? c.mobile : "";
   }
+  function doSave(totals) {
+    const clientCode = codeInput.value.trim();
+    saveBillRecord({
+      clientCode,
+      servicesTaken: totals.checked.map(c => c.dataset.name).join(", "),
+      totalAmount: totals.final,
+      discount: totals.raw || null,
+      date: new Date().toISOString().split("T")[0],
+    });
+    saved = true;
+  }
+  function validate(totals) {
+    if (!codeInput.value.trim()) { toast("Enter a Client Code"); return false; }
+    if (totals.checked.length === 0) { toast("Tick at least one service"); return false; }
+    return true;
+  }
 
   document.getElementById("saveBillBtn").addEventListener("click", () => {
-    const clientCode = codeInput.value.trim();
-    const servicesTaken = document.getElementById("bServices").value.trim();
-    const totalAmount = document.getElementById("bAmount").value;
-    if (!clientCode) return toast("Enter a Client Code");
-    if (!servicesTaken || !totalAmount) return toast("Services and amount are required");
-
-    saveBillRecord({ clientCode, servicesTaken, totalAmount, date: new Date().toISOString().split("T")[0] });
+    const totals = computeTotals();
+    if (!validate(totals)) return;
+    doSave(totals);
     toast("Bill saved");
+    renderPanelBill();
   });
 
-  document.getElementById("sendBillWhatsApp").addEventListener("click", () => sendViaWhatsApp(resolvedMobile(), billMessage()));
-  document.getElementById("sendBillSMS").addEventListener("click", () => sendViaSMS(resolvedMobile(), billMessage()));
+  document.getElementById("sendBillWhatsApp").addEventListener("click", () => {
+    const totals = computeTotals();
+    if (!validate(totals)) return;
+    if (!saved) doSave(totals);
+    sendViaWhatsApp(resolvedMobile(), billMessage(totals));
+    renderPanelBill();
+  });
+  document.getElementById("sendBillSMS").addEventListener("click", () => {
+    const totals = computeTotals();
+    if (!validate(totals)) return;
+    if (!saved) doSave(totals);
+    sendViaSMS(resolvedMobile(), billMessage(totals));
+    renderPanelBill();
+  });
 }
 
 // ---- Reminder ----

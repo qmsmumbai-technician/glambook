@@ -325,6 +325,32 @@ main { max-width: 640px; margin: 0 auto; padding: 0 20px 60px; }
 .small-btn.danger { color: #B44646; border-color: #E9C9C9; }
 .small-btn.confirm { color: #4C8C5A; border-color: #C9E9CF; }
 
+/* ===== Bill Generation checklist ===== */
+.bill-cat-block { margin-bottom: 18px; }
+.bill-cat-title {
+  font-family: var(--serif); color: var(--plum); font-size: 15px;
+  margin: 0 0 6px; padding-bottom: 4px; border-bottom: 1px solid var(--gold);
+}
+.bill-group-title { font-size: 12px; color: var(--muted); margin: 10px 0 2px; text-transform: uppercase; letter-spacing: 0.03em; }
+.bill-item-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 0; border-bottom: 1px solid var(--border);
+  cursor: pointer;
+}
+.bill-item-row input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--rose); flex-shrink: 0; }
+.bill-item-name { flex: 1; font-size: 14px; color: var(--ink); }
+.bill-item-price { font-size: 13px; color: var(--muted); }
+
+.bill-summary {
+  margin-top: 20px; padding: 16px; background: white;
+  border: 1px solid var(--border); border-radius: 10px;
+}
+.bill-summary-row { display: flex; justify-content: space-between; font-size: 14px; color: var(--ink); padding: 4px 0; }
+.bill-summary-row.bill-final {
+  border-top: 1px solid var(--gold); margin-top: 8px; padding-top: 10px;
+  font-family: var(--serif); font-size: 19px; color: var(--plum); font-weight: 600;
+}
+
 /* ===== Toast ===== */
 .toast {
   position: fixed;
