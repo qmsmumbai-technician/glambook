@@ -487,7 +487,10 @@ function renderPanelBill() {
     <div id="billReviewList">
       ${items.map(it => `
         <div class="bill-review-row" data-id="${it.id}">
-          <span class="bill-item-name">${escapeHtml(it.name)}</span>
+          <span class="bill-item-info">
+            <span class="bill-item-name">${escapeHtml(it.name)}</span>
+            <span class="bill-item-desc">${escapeHtml(it.categoryName || "")}</span>
+          </span>
           <span class="bill-item-price">₹${it.price ?? 0}</span>
           <button class="remove-item-btn" data-remove="${it.id}" title="Remove">&times;</button>
         </div>
@@ -552,7 +555,7 @@ function renderPanelBill() {
   computeTotals();
 
   function billMessage(totals) {
-    const lines = totals.items.map(i => `- ${i.name}: ₹${i.price ?? 0}`).join("\n");
+    const lines = totals.items.map(i => `- ${i.name} (${i.categoryName || "-"}): ₹${i.price ?? 0}`).join("\n");
     const discountLine = totals.discountAmount ? `\nDiscount: -₹${Math.round(totals.discountAmount)}` : "";
     return `Hi! Here's your bill from ${brand.appName}:\n${lines}\nSubtotal: ₹${totals.subtotal}${discountLine}\nFinal Total: ₹${totals.final}\nThank you for visiting!`;
   }
@@ -563,7 +566,7 @@ function renderPanelBill() {
   function doSave(totals) {
     saveBillRecord({
       clientCode: codeInput.value.trim(),
-      servicesTaken: totals.items.map(i => i.name).join(", "),
+      servicesTaken: totals.items.map(i => `${i.name} (${i.categoryName || "-"})`).join(", "),
       totalAmount: totals.final,
       discount: totals.raw || null,
       date: new Date().toISOString().split("T")[0],

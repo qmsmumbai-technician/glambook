@@ -157,7 +157,32 @@ main { max-width: 640px; margin: 0 auto; padding: 0 20px 60px; }
 }
 .menu-item:last-child { border-bottom: none; }
 .menu-item-check { display: flex; align-items: center; flex-shrink: 0; }
-.menu-item-check input[type="checkbox"] { width: 19px; height: 19px; accent-color: var(--rose); }
+.menu-item-check input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--border);
+  border-radius: 4px;
+  background: white;
+  cursor: pointer;
+  position: relative;
+  flex-shrink: 0;
+  margin: 0;
+}
+.menu-item-check input[type="checkbox"]:checked {
+  background: var(--rose);
+  border-color: var(--rose);
+}
+.menu-item-check input[type="checkbox"]:checked::after {
+  content: "";
+  position: absolute;
+  left: 6px; top: 2px;
+  width: 5px; height: 10px;
+  border: solid white;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
 .menu-item-name { flex: 1; font-size: 15px; color: var(--ink); }
 .price-field {
   display: flex; align-items: center; gap: 2px;
@@ -290,7 +315,9 @@ main { max-width: 640px; margin: 0 auto; padding: 0 20px 60px; }
   display: flex; align-items: center; justify-content: space-between; gap: 10px;
   padding: 10px 0; border-bottom: 1px solid var(--border);
 }
-.bill-review-row .bill-item-name { flex: 1; font-size: 14px; color: var(--ink); }
+.bill-review-row .bill-item-info { flex: 1; display: flex; flex-direction: column; }
+.bill-review-row .bill-item-name { font-size: 14px; color: var(--ink); }
+.bill-review-row .bill-item-desc { font-size: 12px; color: var(--muted); }
 .bill-review-row .bill-item-price { font-size: 14px; color: var(--plum); font-weight: 500; }
 .remove-item-btn {
   background: none; border: none; color: var(--muted); font-size: 20px;
