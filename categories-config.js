@@ -66,13 +66,26 @@ export const categories = [
     icon: icon.skin,
     groups: [
       {
-        name: "Skincare & Facials",
+        name: "Facial & Clean-ups",
         items: [
-          { id: "clean-up", name: "Clean-up", price: null },
-          { id: "de-tan", name: "De-tan Treatment", price: null },
-          { id: "hydrating-facial", name: "Hydrating Facial", price: null },
-          { id: "brightening-facial", name: "Brightening Facial", price: null },
-          { id: "anti-aging-facial", name: "Anti-Aging Facial", price: null },
+          { id: "fruit-facial", name: "Fruit Facial", price: null },
+          { id: "anti-de-tan-treatment", name: "Anti/De-Tan Treatment", price: null },
+        ],
+      },
+      {
+        name: "Luxury Skin Rituals like O3+",
+        items: [
+          { id: "hydra-hydration", name: "Hydra/Hydration", price: null, mode: "salon" },
+          { id: "brightening", name: "Brightening", price: null, mode: "salon" },
+          { id: "anti-aging", name: "Anti-Aging", price: null, mode: "salon" },
+        ],
+      },
+      {
+        name: "Bleaching",
+        items: [
+          { id: "bleach-face", name: "Face", price: null },
+          { id: "bleach-neck", name: "Neck", price: null },
+          { id: "bleach-full-body", name: "Full Body", price: null },
         ],
       },
     ],
@@ -83,11 +96,18 @@ export const categories = [
     icon: icon.grooming,
     groups: [
       {
-        name: "Grooming & Hair Removal",
+        name: "Threading",
         items: [
-          { id: "eyebrow-threading", name: "Eyebrow Threading", price: null },
-          { id: "upper-lip-waxing", name: "Upper Lip Waxing", price: null },
-          { id: "full-body-waxing", name: "Full-Body Waxing", price: null },
+          { id: "threading-eyebrow", name: "Eyebrow", price: null },
+          { id: "threading-upper-lip", name: "Upper Lip", price: null },
+        ],
+      },
+      {
+        name: "Waxing",
+        items: [
+          { id: "wax-honey", name: "Honey Wax", price: null },
+          { id: "wax-rica-roll", name: "Rice & Roll", price: null },
+          { id: "wax-sugar", name: "Sugar", price: null },
         ],
       },
     ],
@@ -98,12 +118,17 @@ export const categories = [
     icon: icon.hands,
     groups: [
       {
-        name: "Hands & Feet",
+        name: "Manicure & Pedicure",
         items: [
           { id: "manicure", name: "Manicure", price: null },
           { id: "pedicure", name: "Pedicure", price: null },
-          { id: "gel-polish", name: "Gel Polish", price: null },
-          { id: "hand-foot-spa", name: "Hand & Foot Spa", price: null },
+        ],
+      },
+      {
+        name: "Body Treatment",
+        items: [
+          { id: "gel-polish-spa", name: "Gel Polish Spa", price: null },
+          { id: "relaxing-hand-foot-spa", name: "Relaxing Hand & Foot Spa", price: null },
         ],
       },
     ],
@@ -114,11 +139,20 @@ export const categories = [
     icon: icon.makeup,
     groups: [
       {
-        name: "Special Occasion Makeup",
+        name: "Makeup & Special Package",
         items: [
           { id: "party-makeup", name: "Party Makeup", price: null },
-          { id: "engagement-makeup", name: "Engagement Makeup", price: null },
-          { id: "bridal-package", name: "Bridal Package", price: null },
+          { id: "engagement-looks", name: "Engagement Looks", price: null },
+          { id: "makeup-hair-styling", name: "Hair Styling", price: null },
+        ],
+      },
+      {
+        name: "Bridal Services",
+        items: [
+          { id: "pre-bridal-skin-prep", name: "Pre Bridal Skin Preparation", price: null },
+          { id: "saree-draping", name: "Saree Draping", price: null },
+          { id: "complete-bridal-makeup-hair", name: "Complete Bridal Makeup & Hair Styling", price: null },
+          { id: "bridal-exfoliating-scrubs", name: "Exfoliating Scrubs", price: null },
         ],
       },
     ],
