@@ -1,0 +1,41 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Services: anyone can read (it's a public catalog), only the signed-in
+    // owner (via Firebase Auth) can write.
+    match /services/{serviceId} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+
+    // Bookings: anyone can create a booking (customers aren't authenticated
+    // yet — matches the phone-only login for now). Only the owner can read
+    // the full list or update/delete. Customers only ever query their own
+    // bookings by phone number from the client, but that's not enforced
+    // server-side until real phone auth is added — see note below.
+    match /bookings/{bookingId} {
+      allow create: if true;
+      allow read, update, delete: if request.auth != null;
+    }
+  }
+}
+
+// IMPORTANT — same next step as Kaarigar:
+// Right now customer "login" is just a phone number typed into the browser,
+// stored in localStorage. It's convenient but not secure: anyone could guess
+// or edit the phone number to read someone else's bookings by calling the
+// client-side query directly. These rules currently lock booking READS to
+// the admin only, which avoids that leak, but it also means the "My Bookings"
+// screen only works because it's reading through the same unauthenticated
+// client... which these rules block once deployed.
+//
+// So before you deploy real rules, do ONE of:
+//  (a) Add Firebase Phone Authentication (same next step you had for
+//      Kaarigar) and change the bookings "read" rule to:
+//        allow read: if request.auth != null &&
+//                    (request.auth.token.phone_number == resource.data.customerPhone
+//                     || <owner check>);
+//  (b) For now (pre-launch, testing only), temporarily use:
+//        allow read: if true;
+//      and tighten it before you go public — do not ship this to real users.

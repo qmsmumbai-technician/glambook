@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="theme-color" content="#2E1520">
+<title>GlamBook</title>
+<link rel="manifest" href="manifest.json">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand-block">
+    <img id="brandLogo" class="brand-logo" alt="" />
+    <div class="brand-text">
+      <div class="brand-name" id="brandName"></div>
+      <div class="brand-phone" id="brandPhone"></div>
+    </div>
+  </div>
+  <div class="header-actions">
+    <button class="icon-btn" data-route="bookings" title="My Bookings">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5" width="16" height="16" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/></svg>
+    </button>
+    <button id="loginBtn" class="login-btn">Sign in</button>
+  </div>
+</header>
+
+<main id="app"></main>
+
+<div id="toast" class="toast"></div>
+
+<!-- ===== Templates ===== -->
+
+<template id="tpl-home">
+  <section class="hero">
+    <h1 id="heroTagline"></h1>
+    <p class="hero-sub" id="heroSubTagline"></p>
+  </section>
+
+  <section class="category-grid" id="categoryGrid"></section>
+</template>
+
+<template id="tpl-category">
+  <section class="subservice-view">
+    <button class="back-btn" data-route="home">&larr; All services</button>
+    <div class="category-header">
+      <span class="category-icon-lg" id="categoryIconLg"></span>
+      <h2 id="categoryName"></h2>
+    </div>
+    <div class="subservice-grid" id="subserviceGrid"></div>
+  </section>
+</template>
+
+<template id="tpl-book">
+  <section class="book-flow">
+    <button class="back-btn" data-route="home">&larr; Back to services</button>
+    <h2 id="bookServiceName"></h2>
+    <p class="muted" id="bookServiceMeta"></p>
+
+    <div class="field-group" id="modeGroup">
+      <label>Where?</label>
+      <div class="pill-row" id="modeOptions"></div>
+    </div>
+
+    <div class="field-group" id="addressGroup" style="display:none">
+      <label for="addressInput">Your address</label>
+      <textarea id="addressInput" rows="2" placeholder="House no, street, area, landmark"></textarea>
+    </div>
+
+    <div class="field-group">
+      <label for="dateInput">Date</label>
+      <input type="date" id="dateInput">
+    </div>
+
+    <div class="field-group">
+      <label>Time of day</label>
+      <div class="pill-row" id="timeOptions">
+        <button class="pill" data-time="morning">Morning</button>
+        <button class="pill" data-time="afternoon">Afternoon</button>
+        <button class="pill" data-time="evening">Evening</button>
+      </div>
+    </div>
+
+    <div class="field-group">
+      <label for="nameInput">Your name</label>
+      <input type="text" id="nameInput" placeholder="Full name">
+    </div>
+
+    <div class="field-group">
+      <label for="phoneInput">Phone number</label>
+      <input type="tel" id="phoneInput" placeholder="10-digit mobile number">
+    </div>
+
+    <div class="field-group">
+      <label for="notesInput">Notes (optional)</label>
+      <textarea id="notesInput" rows="2" placeholder="Anything we should know?"></textarea>
+    </div>
+
+    <button class="primary-btn" id="confirmBookingBtn">Confirm booking</button>
+  </section>
+</template>
+
+<template id="tpl-bookings">
+  <section class="bookings-view">
+    <h2>My Bookings</h2>
+    <div id="bookingsList"><p class="muted">Loading…</p></div>
+  </section>
+</template>
+
+<template id="tpl-login">
+  <section class="login-view">
+    <h2>Sign in</h2>
+    <p class="muted">Enter your phone number to see your bookings.</p>
+    <div class="field-group">
+      <label for="loginPhone">Phone number</label>
+      <input type="tel" id="loginPhone" placeholder="10-digit mobile number">
+    </div>
+    <button class="primary-btn" id="loginConfirmBtn">Continue</button>
+    <p class="fine-print">No OTP for now — this just remembers your bookings on this device.</p>
+  </section>
+</template>
+
+<!-- ===== Admin ===== -->
+
+<template id="tpl-admin-login">
+  <section class="login-view">
+    <h2>Owner sign in</h2>
+    <div class="field-group">
+      <label for="adminEmail">Email</label>
+      <input type="email" id="adminEmail">
+    </div>
+    <div class="field-group">
+      <label for="adminPassword">Password</label>
+      <input type="password" id="adminPassword">
+    </div>
+    <button class="primary-btn" id="adminLoginBtn">Sign in</button>
+    <p class="error" id="adminLoginError"></p>
+  </section>
+</template>
+
+<template id="tpl-admin">
+  <section class="admin-view">
+    <h2>Bookings</h2>
+    <div id="adminContent"></div>
+  </section>
+</template>
+
+<script type="module" src="firebase-config.js"></script>
+<script type="module" src="app.js"></script>
+</body>
+</html>
