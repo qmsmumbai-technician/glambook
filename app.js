@@ -1,14 +1,62 @@
-import { db, auth } from "./firebase-config.js";
 import { brand } from "./brand-config.js";
 import { categories } from "./categories-config.js";
-import {
-  collection, doc, addDoc, getDocs, query, where, updateDoc
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-import {
-  signInWithEmailAndPassword, onAuthStateChanged, signOut
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
-// ===== Apply branding (the whole point of brand-config.js) =====
+// ===== Register service worker =====
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => navigator.serviceWorker.register("sw.js"));
+}
+
+// ===== State =====
+const state = {
+  route: "home",
+  selectedCategory: null,
+  selectedService: null,
+  bookingMode: null,
+  selectedTime: null,
+  panelSubroute: null,
+  editingClientCode: null,
+};
+
+const app = document.getElementById("app");
+const toastEl = document.getElementById("toast");
+
+function toast(msg) {
+  toastEl.textContent = msg;
+  toastEl.classList.add("show");
+  setTimeout(() => toastEl.classList.remove("show"), 2600);
+}
+
+// ===== PIN lock =====
+function isUnlocked() { return sessionStorage.getItem("glambook_unlocked") === "1"; }
+function unlock() { sessionStorage.setItem("glambook_unlocked", "1"); }
+function lockApp() {
+  sessionStorage.removeItem("glambook_unlocked");
+  location.hash = "#/home";
+  render();
+}
+
+function renderPinLock() {
+  const tpl = document.getElementById("tpl-pin");
+  app.innerHTML = "";
+  app.appendChild(tpl.content.cloneNode(true));
+  document.querySelector(".topbar").style.visibility = "hidden";
+
+  const input = document.getElementById("pinInput");
+  const tryUnlock = () => {
+    if (input.value === brand.appPin) {
+      unlock();
+      document.querySelector(".topbar").style.visibility = "visible";
+      applyBrand();
+      render();
+    } else {
+      document.getElementById("pinError").textContent = "Wrong PIN";
+    }
+  };
+  document.getElementById("pinConfirmBtn").addEventListener("click", tryUnlock);
+  input.addEventListener("keydown", (e) => { if (e.key === "Enter") tryUnlock(); });
+}
+
+// ===== Apply branding =====
 function applyBrand() {
   document.title = brand.appName;
 
@@ -40,33 +88,6 @@ function applyBrand() {
   document.getElementById("brandPhone").textContent = brand.contactPhone || "";
 }
 
-// ===== Register service worker =====
-if ("serviceWorker" in navigator) {
-  window.addEventListener("load", () => navigator.serviceWorker.register("sw.js"));
-}
-
-// ===== State =====
-const state = {
-  route: "home",
-  selectedCategory: null,
-  selectedService: null,
-  bookingMode: null,
-  selectedTime: null,
-  isAdmin: false,
-  adminUser: null,
-  adminSubroute: null,
-  editingClientCode: null,
-};
-
-const app = document.getElementById("app");
-const toastEl = document.getElementById("toast");
-
-function toast(msg) {
-  toastEl.textContent = msg;
-  toastEl.classList.add("show");
-  setTimeout(() => toastEl.classList.remove("show"), 2600);
-}
-
 // ===== Router =====
 function setRoute(route) {
   state.route = route;
@@ -79,12 +100,12 @@ window.addEventListener("hashchange", () => {
     const catId = hash.split("/")[1];
     state.selectedCategory = categories.find(c => c.id === catId) || null;
     setRoute("category");
-  } else if (hash.startsWith("admin/")) {
-    state.adminSubroute = hash.split("/")[1];
-    setRoute("admin");
-  } else if (hash === "admin") {
-    state.adminSubroute = null;
-    setRoute("admin");
+  } else if (hash.startsWith("panel/")) {
+    state.panelSubroute = hash.split("/")[1];
+    setRoute("panel");
+  } else if (hash === "panel") {
+    state.panelSubroute = null;
+    setRoute("panel");
   } else {
     setRoute(hash);
   }
@@ -92,42 +113,19 @@ window.addEventListener("hashchange", () => {
 
 document.body.addEventListener("click", (e) => {
   const btn = e.target.closest("[data-route]");
-  if (btn) {
-    location.hash = "#/" + btn.dataset.route;
-  }
+  if (btn) location.hash = "#/" + btn.dataset.route;
 });
 
-document.getElementById("loginBtn").addEventListener("click", () => {
-  if (getMyPhone()) {
-    if (confirm("Sign out of this device?")) {
-      localStorage.removeItem("glambook_phone");
-      localStorage.removeItem("glambook_name");
-      toast("Signed out");
-      setRoute("home");
-    }
-  } else {
-    setRoute("login");
-  }
-});
-
-// ===== Local "auth" for customers (phone number, no OTP yet) =====
-function getMyPhone() { return localStorage.getItem("glambook_phone"); }
-function getMyName() { return localStorage.getItem("glambook_name") || ""; }
+document.getElementById("lockBtn").addEventListener("click", lockApp);
 
 // ===== Render =====
-async function render() {
-  updateNavActive();
+function render() {
+  if (!isUnlocked()) { renderPinLock(); return; }
 
   if (state.route === "home") return renderHome();
   if (state.route === "category") return renderCategory();
   if (state.route === "book") return renderBook();
-  if (state.route === "bookings") return renderBookings();
-  if (state.route === "login") return renderLogin();
-  if (state.route === "admin") return renderAdminGate();
-}
-
-function updateNavActive() {
-  document.getElementById("loginBtn").textContent = getMyPhone() ? "Sign out" : "Sign in";
+  if (state.route === "panel") return renderPanel();
 }
 
 // ---- Home: category grid ----
@@ -148,9 +146,7 @@ function renderHome() {
   `).join("");
 
   grid.querySelectorAll(".category-tile").forEach(tile => {
-    tile.addEventListener("click", () => {
-      location.hash = "#/category/" + tile.dataset.cat;
-    });
+    tile.addEventListener("click", () => { location.hash = "#/category/" + tile.dataset.cat; });
   });
 }
 
@@ -202,7 +198,6 @@ function renderCategory() {
     </div>
   `).join("");
 
-  // Editing price: stop the row-click (which would navigate to booking)
   wrap.querySelectorAll(".price-input").forEach(input => {
     input.addEventListener("click", (e) => e.stopPropagation());
     input.addEventListener("change", () => {
@@ -211,7 +206,6 @@ function renderCategory() {
     });
   });
 
-  // Tapping the row (not the price field) goes to booking
   wrap.querySelectorAll(".menu-item").forEach(row => {
     row.addEventListener("click", () => {
       const group = cat.groups.find(g => g.items.some(i => i.id === row.dataset.item));
@@ -231,7 +225,22 @@ function renderCategory() {
   });
 }
 
-// ---- Book flow ----
+// ---- Booking log (local storage — this is your appointment book) ----
+function getBookings() { return JSON.parse(localStorage.getItem("glambook_bookings") || "[]"); }
+function saveBookings(list) { localStorage.setItem("glambook_bookings", JSON.stringify(list)); }
+function addBooking(booking) {
+  const list = getBookings();
+  booking.id = (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random());
+  list.push(booking);
+  saveBookings(list);
+}
+function updateBookingStatus(id, status) {
+  const list = getBookings();
+  const b = list.find(x => x.id === id);
+  if (b) b.status = status;
+  saveBookings(list);
+}
+
 function renderBook() {
   if (!state.selectedService) { location.hash = "#/home"; return; }
   const tpl = document.getElementById("tpl-book");
@@ -243,11 +252,10 @@ function renderBook() {
   const priceText = s.price ? `₹${s.price}` : "Price on request";
   document.getElementById("bookServiceMeta").textContent = [priceText, s.duration, s.categoryName].filter(Boolean).join(" · ");
 
-  // mode options
   const modeOpts = document.getElementById("modeOptions");
   const modes = s.mode === "both" ? ["home", "salon"] : [s.mode];
   modeOpts.innerHTML = modes.map(m =>
-    `<button class="pill" data-mode="${m}">${m === "home" ? "At my home" : "At the salon"}</button>`
+    `<button class="pill" data-mode="${m}">${m === "home" ? "At client's home" : "At the salon"}</button>`
   ).join("");
   if (modes.length === 1) {
     state.bookingMode = modes[0];
@@ -263,7 +271,6 @@ function renderBook() {
     });
   });
 
-  // time options
   document.querySelectorAll("#timeOptions .pill").forEach(p => {
     p.addEventListener("click", () => {
       state.selectedTime = p.dataset.time;
@@ -272,208 +279,60 @@ function renderBook() {
     });
   });
 
-  // prefill from local storage
-  document.getElementById("nameInput").value = getMyName();
-  document.getElementById("phoneInput").value = getMyPhone() || "";
-
-  // min date = today
   const dateInput = document.getElementById("dateInput");
   dateInput.min = new Date().toISOString().split("T")[0];
 
   document.getElementById("confirmBookingBtn").addEventListener("click", submitBooking);
 }
 
-async function submitBooking() {
+function submitBooking() {
   const name = document.getElementById("nameInput").value.trim();
   const phone = document.getElementById("phoneInput").value.trim();
   const date = document.getElementById("dateInput").value;
   const address = document.getElementById("addressInput").value.trim();
   const notes = document.getElementById("notesInput").value.trim();
 
-  if (!state.bookingMode) return toast("Please choose where you'd like the service");
+  if (!state.bookingMode) return toast("Please choose where the service will happen");
   if (!date) return toast("Please pick a date");
   if (!state.selectedTime) return toast("Please pick a time of day");
-  if (!name) return toast("Please enter your name");
+  if (!name) return toast("Please enter the client's name");
   if (!/^\d{10}$/.test(phone)) return toast("Please enter a valid 10-digit phone number");
-  if (state.bookingMode === "home" && !address) return toast("Please enter your address");
+  if (state.bookingMode === "home" && !address) return toast("Please enter the client's address");
 
-  const btn = document.getElementById("confirmBookingBtn");
-  btn.disabled = true;
-  btn.textContent = "Booking…";
+  addBooking({
+    serviceId: state.selectedService.id,
+    serviceName: state.selectedService.name,
+    price: state.selectedService.price,
+    mode: state.bookingMode,
+    date,
+    timeOfDay: state.selectedTime,
+    address: state.bookingMode === "home" ? address : "",
+    notes,
+    clientName: name,
+    clientPhone: phone,
+    status: "confirmed",
+    createdAt: new Date().toISOString(),
+  });
 
-  try {
-    await addDoc(collection(db, "bookings"), {
-      serviceId: state.selectedService.id,
-      serviceName: state.selectedService.name,
-      price: state.selectedService.price,
-      mode: state.bookingMode,
-      date,
-      timeOfDay: state.selectedTime,
-      address: state.bookingMode === "home" ? address : "",
-      notes,
-      customerName: name,
-      customerPhone: phone,
-      status: "pending",
-      createdAt: new Date().toISOString(),
-    });
-
-    localStorage.setItem("glambook_phone", phone);
-    localStorage.setItem("glambook_name", name);
-
-    toast("Booking request sent!");
-    location.hash = "#/bookings";
-  } catch (err) {
-    console.error(err);
-    toast("Something went wrong. Please try again.");
-    btn.disabled = false;
-    btn.textContent = "Confirm booking";
-  }
+  toast("Booking saved");
+  location.hash = "#/panel/bookings";
 }
 
-// ---- My bookings ----
-async function renderBookings() {
-  const tpl = document.getElementById("tpl-bookings");
+// ===== Panel =====
+function renderPanel() {
+  const tpl = document.getElementById("tpl-panel");
   app.innerHTML = "";
   app.appendChild(tpl.content.cloneNode(true));
 
-  const phone = getMyPhone();
-  const listEl = document.getElementById("bookingsList");
-
-  if (!phone) {
-    listEl.innerHTML = `<p class="muted">Sign in with your phone number to see your bookings.</p>`;
-    return;
-  }
-
-  const q = query(collection(db, "bookings"), where("customerPhone", "==", phone));
-  const snap = await getDocs(q);
-  const bookings = snap.docs.map(d => ({ id: d.id, ...d.data() }))
-    .sort((a, b) => (a.date < b.date ? 1 : -1));
-
-  if (bookings.length === 0) {
-    listEl.innerHTML = `<p class="muted">No bookings yet. Go book something nice for yourself.</p>`;
-    return;
-  }
-
-  listEl.innerHTML = bookings.map(b => `
-    <div class="booking-item" data-id="${b.id}">
-      <h4>${escapeHtml(b.serviceName)}</h4>
-      <p>${b.date} · ${capitalize(b.timeOfDay)} · ${b.mode === "home" ? "At home" : "At salon"}</p>
-      <p>₹${b.price}</p>
-      <span class="status-badge status-${b.status}">${capitalize(b.status)}</span>
-      ${b.status !== "cancelled" ? `<div><button class="cancel-link" data-cancel="${b.id}">Cancel booking</button></div>` : ""}
-    </div>
-  `).join("");
-
-  listEl.querySelectorAll("[data-cancel]").forEach(link => {
-    link.addEventListener("click", async () => {
-      if (!confirm("Cancel this booking?")) return;
-      await updateDoc(doc(db, "bookings", link.dataset.cancel), { status: "cancelled" });
-      toast("Booking cancelled");
-      renderBookings();
-    });
-  });
-}
-
-// ---- Customer / owner login (phone number, or phone+PIN for admin) ----
-function renderLogin() {
-  const tpl = document.getElementById("tpl-login");
-  app.innerHTML = "";
-  app.appendChild(tpl.content.cloneNode(true));
-
-  document.getElementById("loginConfirmBtn").addEventListener("click", async () => {
-    const phone = document.getElementById("loginPhone").value.trim();
-    const pin = document.getElementById("loginPin").value.trim();
-    if (!/^\d{10}$/.test(phone)) return toast("Please enter a valid 10-digit phone number");
-
-    const admin = brand.adminAccess;
-    if (admin && phone === admin.phone && pin && pin === admin.pin) {
-      const btn = document.getElementById("loginConfirmBtn");
-      btn.disabled = true;
-      btn.textContent = "Signing in…";
-      try {
-        await signInWithEmailAndPassword(auth, admin.firebaseEmail, admin.firebasePassword);
-        toast("Welcome back");
-        location.hash = "#/admin";
-      } catch (err) {
-        console.error(err);
-        toast("Admin sign-in failed — check firebaseEmail/firebasePassword in brand-config.js");
-        btn.disabled = false;
-        btn.textContent = "Continue";
-      }
-      return;
-    }
-
-    localStorage.setItem("glambook_phone", phone);
-    toast("Signed in");
-    location.hash = "#/bookings";
-  });
-}
-
-// ---- Admin ----
-function renderAdminGate() {
-  onAuthStateChanged(auth, (user) => {
-    state.adminUser = user;
-    if (user) renderAdmin();
-    else {
-      toast("Sign in with your phone + PIN from the home screen to access Admin");
-      location.hash = "#/login";
-    }
-  });
-}
-
-async function renderAdmin() {
-  const tpl = document.getElementById("tpl-admin");
-  app.innerHTML = "";
-  app.appendChild(tpl.content.cloneNode(true));
-
-  const sub = state.adminSubroute;
-  if (!sub) renderAdminDashboard();
-  else if (sub === "bookings") renderAdminBookings();
-  else if (sub === "clients") renderAdminClients();
-  else if (sub === "discount") renderAdminDiscount();
-  else if (sub === "history") renderAdminHistory();
-  else if (sub === "bill") renderAdminBill();
-  else if (sub === "reminder") renderAdminReminder();
-}
-
-function renderAdminDashboard() {
-  const content = document.getElementById("adminContent");
-  content.innerHTML = `
-    <h2>Admin Panel</h2>
-    <div class="admin-menu">
-      <button class="admin-menu-btn" data-route="admin/bookings">
-        <span class="admin-menu-icon">${icons.bookings}</span>
-        <span>Bookings</span>
-      </button>
-      <button class="admin-menu-btn" data-route="admin/clients">
-        <span class="admin-menu-icon">${icons.client}</span>
-        <span>Client Details</span>
-      </button>
-      <button class="admin-menu-btn" data-route="admin/discount">
-        <span class="admin-menu-icon">${icons.discount}</span>
-        <span>Special Discount</span>
-      </button>
-      <button class="admin-menu-btn" data-route="admin/history">
-        <span class="admin-menu-icon">${icons.history}</span>
-        <span>Client History</span>
-      </button>
-      <button class="admin-menu-btn" data-route="admin/bill">
-        <span class="admin-menu-icon">${icons.bill}</span>
-        <span>Bill Generation</span>
-      </button>
-      <button class="admin-menu-btn" data-route="admin/reminder">
-        <span class="admin-menu-icon">${icons.reminder}</span>
-        <span>Reminder</span>
-      </button>
-    </div>
-    <p class="fine-print" style="margin-top:20px">Client details, discounts, bills, and reminders are stored only on this device — they won't appear if you open the admin panel on a different phone.</p>
-    <button class="small-btn danger" id="adminSignOutBtn" style="margin-top:16px">Sign out of Admin</button>
-  `;
-  document.getElementById("adminSignOutBtn").addEventListener("click", async () => {
-    await signOut(auth);
-    toast("Signed out");
-    location.hash = "#/home";
-  });
+  const sub = state.panelSubroute;
+  if (!sub) renderPanelDashboard();
+  else if (sub === "bookings") renderPanelBookings();
+  else if (sub === "clients") renderPanelClients();
+  else if (sub === "discount") renderPanelDiscount();
+  else if (sub === "history") renderPanelHistory();
+  else if (sub === "bill") renderPanelBill();
+  else if (sub === "reminder") renderPanelReminder();
+  else if (sub === "backup") renderPanelBackup();
 }
 
 const icons = {
@@ -483,9 +342,63 @@ const icons = {
   history: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h13a3 3 0 0 1 3 3v11H7a3 3 0 0 1-3-3V5Z"/><path d="M8 9h8M8 13h5"/></svg>`,
   bill: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2V3Z"/><path d="M9 8h6M9 12h6"/></svg>`,
   reminder: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a5 5 0 0 0-5 5v3.5L5 15h14l-2-3.5V8a5 5 0 0 0-5-5Z"/><path d="M9.5 19a2.5 2.5 0 0 0 5 0"/></svg>`,
+  backup: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11m0 0-3.5-3.5M12 15l3.5-3.5"/><path d="M5 16v2a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-2"/></svg>`,
 };
 
-// ===== Local CRM storage (device-only) =====
+function renderPanelDashboard() {
+  const content = document.getElementById("panelContent");
+  content.innerHTML = `
+    <h2>Panel</h2>
+    <div class="admin-menu">
+      <button class="admin-menu-btn" data-route="panel/bookings"><span class="admin-menu-icon">${icons.bookings}</span><span>Bookings</span></button>
+      <button class="admin-menu-btn" data-route="panel/clients"><span class="admin-menu-icon">${icons.client}</span><span>Client Details</span></button>
+      <button class="admin-menu-btn" data-route="panel/discount"><span class="admin-menu-icon">${icons.discount}</span><span>Special Discount</span></button>
+      <button class="admin-menu-btn" data-route="panel/history"><span class="admin-menu-icon">${icons.history}</span><span>Client History</span></button>
+      <button class="admin-menu-btn" data-route="panel/bill"><span class="admin-menu-icon">${icons.bill}</span><span>Bill Generation</span></button>
+      <button class="admin-menu-btn" data-route="panel/reminder"><span class="admin-menu-icon">${icons.reminder}</span><span>Reminder</span></button>
+      <button class="admin-menu-btn" data-route="panel/backup"><span class="admin-menu-icon">${icons.backup}</span><span>Backup & Restore</span></button>
+    </div>
+    <p class="fine-print" style="margin-top:20px">Everything here is stored only on this device.</p>
+  `;
+}
+
+// ---- Bookings ----
+function renderPanelBookings() {
+  const content = document.getElementById("panelContent");
+  const backHtml = `<button class="back-btn" data-route="panel">&larr; Panel</button><h2>Bookings</h2>`;
+  const bookings = getBookings().sort((a, b) => (a.date < b.date ? 1 : -1));
+
+  if (bookings.length === 0) {
+    content.innerHTML = backHtml + `<p class="muted">No bookings yet.</p>`;
+    return;
+  }
+
+  content.innerHTML = backHtml + bookings.map(b => `
+    <div class="admin-booking-row">
+      <div class="admin-row-top">
+        <strong>${escapeHtml(b.serviceName)}</strong>
+        <span class="status-badge status-${b.status}">${capitalize(b.status)}</span>
+      </div>
+      <p class="muted">${escapeHtml(b.clientName)} · ${escapeHtml(b.clientPhone)}</p>
+      <p class="muted">${b.date} · ${capitalize(b.timeOfDay)} · ${b.mode === "home" ? "At client's home" : "At salon"}</p>
+      ${b.mode === "home" ? `<p class="muted">${escapeHtml(b.address)}</p>` : ""}
+      ${b.notes ? `<p class="muted">Note: ${escapeHtml(b.notes)}</p>` : ""}
+      <div class="admin-actions">
+        ${b.status !== "cancelled" ? `<button class="small-btn danger" data-cancel="${b.id}">Cancel</button>` : ""}
+      </div>
+    </div>
+  `).join("");
+
+  content.querySelectorAll("[data-cancel]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      updateBookingStatus(btn.dataset.cancel, "cancelled");
+      toast("Booking cancelled");
+      renderPanelBookings();
+    });
+  });
+}
+
+// ---- Local CRM storage ----
 function getClients() { return JSON.parse(localStorage.getItem("glambook_clients") || "{}"); }
 function saveClientRecord(client) {
   const clients = getClients();
@@ -512,10 +425,7 @@ function getBillsForClient(code) {
   return getBills().filter(b => b.clientCode === code).sort((a, b) => (a.date < b.date ? 1 : -1));
 }
 
-// ===== Send helpers: opens WhatsApp / SMS with the message pre-filled =====
-// True silent auto-send isn't possible from a plain web app without a paid
-// gateway (Twilio for SMS, WhatsApp Business API) — this is the closest
-// equivalent: one tap in the native app to actually send.
+// ---- Send helpers ----
 function normalizeIndianMobile(raw) {
   const digits = (raw || "").replace(/\D/g, "");
   if (digits.length === 10) return "91" + digits;
@@ -531,13 +441,13 @@ function sendViaSMS(mobile, message) {
   window.location.href = `sms:${mobile}?body=${encodeURIComponent(message)}`;
 }
 
-// ---- 1. Client Details ----
-function renderAdminClients() {
-  const content = document.getElementById("adminContent");
+// ---- Client Details ----
+function renderPanelClients() {
+  const content = document.getElementById("panelContent");
   const editing = state.editingClientCode ? getClient(state.editingClientCode) : null;
 
   content.innerHTML = `
-    <button class="back-btn" data-route="admin">&larr; Admin Panel</button>
+    <button class="back-btn" data-route="panel">&larr; Panel</button>
     <h2>Client Details</h2>
     <div class="field-group"><label>Name of Client</label><input id="cName" value="${editing ? escapeHtml(editing.name) : ""}"></div>
     <div class="field-group"><label>Client Code</label><input id="cCode" placeholder="e.g. CL001" value="${editing ? escapeHtml(editing.clientCode) : ""}" ${editing ? "disabled" : ""}></div>
@@ -565,13 +475,13 @@ function renderAdminClients() {
     saveClientRecord({ name, clientCode, mobile, birthDate, anniversaryDate });
     toast(editing ? "Client updated" : "Client saved");
     state.editingClientCode = null;
-    renderAdminClients();
+    renderPanelClients();
   });
 
   const cancelBtn = document.getElementById("cancelEditBtn");
   if (cancelBtn) cancelBtn.addEventListener("click", () => {
     state.editingClientCode = null;
-    renderAdminClients();
+    renderPanelClients();
   });
 }
 
@@ -598,7 +508,7 @@ function renderClientList() {
   wrap.querySelectorAll("[data-edit]").forEach(btn => {
     btn.addEventListener("click", () => {
       state.editingClientCode = btn.dataset.edit;
-      renderAdminClients();
+      renderPanelClients();
     });
   });
   wrap.querySelectorAll("[data-del]").forEach(btn => {
@@ -611,12 +521,12 @@ function renderClientList() {
   });
 }
 
-// ---- 2. Special Discount ----
-function renderAdminDiscount() {
-  const content = document.getElementById("adminContent");
+// ---- Special Discount ----
+function renderPanelDiscount() {
+  const content = document.getElementById("panelContent");
   const d = getDiscounts();
   content.innerHTML = `
-    <button class="back-btn" data-route="admin">&larr; Admin Panel</button>
+    <button class="back-btn" data-route="panel">&larr; Panel</button>
     <h2>Special Discount</h2>
     <div class="field-group"><label>Festival Discount</label><input id="dFestival" placeholder="e.g. 10% or ₹200" value="${escapeHtml(d.festivalDiscount || "")}"></div>
     <div class="field-group"><label>Client Anniversary Discount</label><input id="dAnniv" placeholder="e.g. 15% or ₹300" value="${escapeHtml(d.clientAnniversaryDiscount || "")}"></div>
@@ -631,11 +541,11 @@ function renderAdminDiscount() {
   });
 }
 
-// ---- 3. Client History ----
-function renderAdminHistory() {
-  const content = document.getElementById("adminContent");
+// ---- Client History ----
+function renderPanelHistory() {
+  const content = document.getElementById("panelContent");
   content.innerHTML = `
-    <button class="back-btn" data-route="admin">&larr; Admin Panel</button>
+    <button class="back-btn" data-route="panel">&larr; Panel</button>
     <h2>Client History</h2>
     <div class="field-group"><label>Enter Client Code</label><input id="hCode" placeholder="e.g. CL001"></div>
     <button class="primary-btn" id="searchHistoryBtn">Search</button>
@@ -670,11 +580,11 @@ function renderAdminHistory() {
   });
 }
 
-// ---- 4. Bill Generation ----
-function renderAdminBill() {
-  const content = document.getElementById("adminContent");
+// ---- Bill Generation ----
+function renderPanelBill() {
+  const content = document.getElementById("panelContent");
   content.innerHTML = `
-    <button class="back-btn" data-route="admin">&larr; Admin Panel</button>
+    <button class="back-btn" data-route="panel">&larr; Panel</button>
     <h2>Bill Generation</h2>
     <div class="field-group"><label>Client Code</label><input id="bCode" placeholder="e.g. CL001"></div>
     <p class="fine-print" id="bClientPreview"></p>
@@ -718,11 +628,11 @@ function renderAdminBill() {
   document.getElementById("sendBillSMS").addEventListener("click", () => sendViaSMS(resolvedMobile(), billMessage()));
 }
 
-// ---- 5. Reminder ----
-function renderAdminReminder() {
-  const content = document.getElementById("adminContent");
+// ---- Reminder ----
+function renderPanelReminder() {
+  const content = document.getElementById("panelContent");
   content.innerHTML = `
-    <button class="back-btn" data-route="admin">&larr; Admin Panel</button>
+    <button class="back-btn" data-route="panel">&larr; Panel</button>
     <h2>Reminder</h2>
     <div class="field-group"><label>Client Mobile</label><input id="rMobile" type="tel" placeholder="10-digit number"></div>
     <p class="muted" style="text-align:center;margin:4px 0">— or —</p>
@@ -750,50 +660,78 @@ function renderAdminReminder() {
   });
 }
 
-async function renderAdminBookings() {
-  const content = document.getElementById("adminContent");
-  const backHtml = `<button class="back-btn" data-route="admin">&larr; Admin Panel</button><h2>Bookings</h2>`;
-  content.innerHTML = backHtml + `<p class="muted">Loading…</p>`;
+// ---- Backup & Restore ----
+function collectBackupData() {
+  return {
+    exportedAt: new Date().toISOString(),
+    appName: brand.appName,
+    prices: JSON.parse(localStorage.getItem("glambook_prices") || "{}"),
+    bookings: JSON.parse(localStorage.getItem("glambook_bookings") || "[]"),
+    clients: JSON.parse(localStorage.getItem("glambook_clients") || "{}"),
+    discounts: JSON.parse(localStorage.getItem("glambook_discounts") || "{}"),
+    bills: JSON.parse(localStorage.getItem("glambook_bills") || "[]"),
+  };
+}
+function downloadBackup() {
+  const data = collectBackupData();
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  const stamp = new Date().toISOString().split("T")[0];
+  a.href = url;
+  a.download = `glambook-backup-${stamp}.json`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+function restoreBackup(fileText) {
+  let data;
+  try { data = JSON.parse(fileText); } catch { return false; }
+  if (!data || typeof data !== "object") return false;
+  localStorage.setItem("glambook_prices", JSON.stringify(data.prices || {}));
+  localStorage.setItem("glambook_bookings", JSON.stringify(data.bookings || []));
+  localStorage.setItem("glambook_clients", JSON.stringify(data.clients || {}));
+  localStorage.setItem("glambook_discounts", JSON.stringify(data.discounts || {}));
+  localStorage.setItem("glambook_bills", JSON.stringify(data.bills || []));
+  return true;
+}
 
-  const snap = await getDocs(collection(db, "bookings"));
-  const bookings = snap.docs.map(d => ({ id: d.id, ...d.data() }))
-    .sort((a, b) => (a.date < b.date ? 1 : -1));
+function renderPanelBackup() {
+  const content = document.getElementById("panelContent");
+  content.innerHTML = `
+    <button class="back-btn" data-route="panel">&larr; Panel</button>
+    <h2>Backup & Restore</h2>
 
-  if (bookings.length === 0) {
-    content.innerHTML = backHtml + `<p class="muted">No bookings yet.</p>`;
-    return;
-  }
+    <h3 class="admin-subheading">Export</h3>
+    <p class="muted">Saves everything — bookings, clients, prices, discounts, bills — into one file. Keep it somewhere safe (email it to yourself, save to Google Drive, etc.).</p>
+    <button class="primary-btn" id="exportBtn">Export Backup</button>
 
-  content.innerHTML = backHtml + bookings.map(b => `
-    <div class="admin-booking-row">
-      <div class="admin-row-top">
-        <strong>${escapeHtml(b.serviceName)}</strong>
-        <span class="status-badge status-${b.status}">${capitalize(b.status)}</span>
-      </div>
-      <p class="muted">${escapeHtml(b.customerName)} · ${b.customerPhone}</p>
-      <p class="muted">${b.date} · ${capitalize(b.timeOfDay)} · ${b.mode === "home" ? "At home" : "At salon"}</p>
-      ${b.mode === "home" ? `<p class="muted">${escapeHtml(b.address)}</p>` : ""}
-      ${b.notes ? `<p class="muted">Note: ${escapeHtml(b.notes)}</p>` : ""}
-      <div class="admin-actions">
-        ${b.status === "pending" ? `<button class="small-btn confirm" data-confirm="${b.id}">Confirm</button>` : ""}
-        ${b.status !== "cancelled" ? `<button class="small-btn danger" data-cancel="${b.id}">Cancel</button>` : ""}
-      </div>
-    </div>
-  `).join("");
+    <h3 class="admin-subheading">Restore</h3>
+    <p class="muted">⚠️ This replaces everything currently on this device with what's in the file. Only do this if you're sure.</p>
+    <div class="field-group"><input type="file" id="restoreFile" accept="application/json"></div>
+    <button class="primary-btn" id="restoreBtn">Restore from File</button>
+  `;
 
-  content.querySelectorAll("[data-confirm]").forEach(btn => {
-    btn.addEventListener("click", async () => {
-      await updateDoc(doc(db, "bookings", btn.dataset.confirm), { status: "confirmed" });
-      toast("Booking confirmed");
-      renderAdminBookings();
-    });
+  document.getElementById("exportBtn").addEventListener("click", () => {
+    downloadBackup();
+    toast("Backup downloaded");
   });
-  content.querySelectorAll("[data-cancel]").forEach(btn => {
-    btn.addEventListener("click", async () => {
-      await updateDoc(doc(db, "bookings", btn.dataset.cancel), { status: "cancelled" });
-      toast("Booking cancelled");
-      renderAdminBookings();
-    });
+
+  document.getElementById("restoreBtn").addEventListener("click", () => {
+    const fileInput = document.getElementById("restoreFile");
+    const file = fileInput.files[0];
+    if (!file) return toast("Choose a backup file first");
+    if (!confirm("This will replace all current data with the backup file. Continue?")) return;
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      const ok = restoreBackup(reader.result);
+      if (ok) toast("Restored — all data replaced");
+      else toast("That file doesn't look like a valid backup");
+    };
+    reader.onerror = () => toast("Couldn't read that file");
+    reader.readAsText(file);
   });
 }
 
@@ -806,6 +744,6 @@ function escapeHtml(str) {
 function capitalize(s) { return s ? s.charAt(0).toUpperCase() + s.slice(1) : ""; }
 
 // ===== Init =====
-applyBrand();
+if (isUnlocked()) applyBrand();
 const initialRoute = location.hash.replace("#/", "") || "home";
 setRoute(initialRoute);

@@ -266,6 +266,8 @@ main { max-width: 640px; margin: 0 auto; padding: 0 20px 60px; }
 .login-view h2 { font-family: var(--serif); color: var(--plum); }
 .fine-print { font-size: 12px; color: var(--muted); margin-top: 10px; }
 .error { color: #B44646; font-size: 13px; }
+.pin-view { max-width: 280px; margin: 40px auto 0; text-align: center; }
+.pin-view input { text-align: center; font-size: 22px; letter-spacing: 6px; }
 
 /* ===== Admin ===== */
 .admin-view { padding: 24px 0; }

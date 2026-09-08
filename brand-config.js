@@ -1,9 +1,9 @@
 // brand-config.js
 // ============================================================
 // THIS IS THE ONLY FILE YOU EDIT TO RESKIN FOR A NEW PARLOUR.
-// Change these values, swap the Firebase project in
-// firebase-config.js, update manifest.json + icons, and you
-// have a new client's app from the same codebase.
+// Change these values, update manifest.json + icons, and you
+// have a new client's app from the same codebase. No cloud
+// backend to set up — everything runs locally on the device.
 // ============================================================
 
 export const brand = {
@@ -23,26 +23,11 @@ export const brand = {
   contactAddress: "",
 
   // ============================================================
-  // ADMIN ACCESS — enter this phone + PIN on the Sign In screen
-  // to reach the Admin Panel instead of the customer view.
-  // Keep `phone` here DIFFERENT from contactPhone above, since
-  // contactPhone is shown publicly in the header.
-  //
-  // firebaseEmail/firebasePassword must match a real user you
-  // created in Firebase Console → Authentication → Users — the
-  // PIN below is just a friendlier front door; Firestore's actual
-  // security still runs on that Firebase login underneath.
-  //
-  // Note: since this whole app is plain client-side code, someone
-  // technical enough to view page source could find this PIN. It
-  // keeps ordinary customers out, but isn't a strong lock.
+  // APP PIN — required every time the app is opened, since this
+  // is a private tool for you only (client details, bills, etc.
+  // aren't meant to be seen by anyone who picks up the phone).
   // ============================================================
-  adminAccess: {
-    phone: "9999999999",
-    pin: "1234",
-    firebaseEmail: "owner@example.com",
-    firebasePassword: "REPLACE_WITH_REAL_PASSWORD",
-  },
+  appPin: "1234",
 
   colors: {
     primary: "#2E1520",     // header, headings, primary UI
