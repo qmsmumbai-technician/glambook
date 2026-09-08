@@ -32,6 +32,11 @@
 
 <main id="app"></main>
 
+<div id="billBar" class="bill-bar" style="display:none">
+  <span id="billBarText"></span>
+  <button class="bill-bar-btn" data-route="panel/bill">Review &amp; Bill</button>
+</div>
+
 <div id="toast" class="toast"></div>
 
 <!-- ===== Templates ===== -->
@@ -65,55 +70,6 @@
       <h2 id="categoryName"></h2>
     </div>
     <div id="menuGroups"></div>
-  </section>
-</template>
-
-<template id="tpl-book">
-  <section class="book-flow">
-    <button class="back-btn" data-route="home">&larr; Back to services</button>
-    <h2 id="bookServiceName"></h2>
-    <p class="muted" id="bookServiceMeta"></p>
-
-    <div class="field-group" id="modeGroup">
-      <label>Where?</label>
-      <div class="pill-row" id="modeOptions"></div>
-    </div>
-
-    <div class="field-group" id="addressGroup" style="display:none">
-      <label for="addressInput">Client address</label>
-      <textarea id="addressInput" rows="2" placeholder="House no, street, area, landmark"></textarea>
-    </div>
-
-    <div class="field-group">
-      <label for="dateInput">Date</label>
-      <input type="date" id="dateInput">
-    </div>
-
-    <div class="field-group">
-      <label>Time of day</label>
-      <div class="pill-row" id="timeOptions">
-        <button class="pill" data-time="morning">Morning</button>
-        <button class="pill" data-time="afternoon">Afternoon</button>
-        <button class="pill" data-time="evening">Evening</button>
-      </div>
-    </div>
-
-    <div class="field-group">
-      <label for="nameInput">Client name</label>
-      <input type="text" id="nameInput" placeholder="Full name">
-    </div>
-
-    <div class="field-group">
-      <label for="phoneInput">Client mobile</label>
-      <input type="tel" id="phoneInput" placeholder="10-digit mobile number">
-    </div>
-
-    <div class="field-group">
-      <label for="notesInput">Notes (optional)</label>
-      <textarea id="notesInput" rows="2" placeholder="Anything to remember?"></textarea>
-    </div>
-
-    <button class="primary-btn" id="confirmBookingBtn">Save booking</button>
   </section>
 </template>
 

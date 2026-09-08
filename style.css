@@ -150,13 +150,15 @@ main { max-width: 640px; margin: 0 auto; padding: 0 20px 60px; }
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: 10px;
   padding: 13px 0;
   border-bottom: 1px solid var(--border);
   cursor: pointer;
 }
 .menu-item:last-child { border-bottom: none; }
-.menu-item-name { font-size: 15px; color: var(--ink); }
+.menu-item-check { display: flex; align-items: center; flex-shrink: 0; }
+.menu-item-check input[type="checkbox"] { width: 19px; height: 19px; accent-color: var(--rose); }
+.menu-item-name { flex: 1; font-size: 15px; color: var(--ink); }
 .price-field {
   display: flex; align-items: center; gap: 2px;
   flex-shrink: 0;
@@ -177,13 +179,10 @@ main { max-width: 640px; margin: 0 auto; padding: 0 20px 60px; }
 
 .muted { color: var(--muted); }
 
-/* ===== Booking flow ===== */
-.book-flow { padding: 24px 0; }
 .back-btn {
   background: none; border: none; color: var(--rose-dark);
   font-size: 14px; padding: 0; margin-bottom: 16px; cursor: pointer;
 }
-.book-flow h2 { font-family: var(--serif); color: var(--plum); margin: 0 0 4px; font-size: 24px; }
 
 .field-group { margin: 20px 0; }
 .field-group label {
@@ -207,18 +206,6 @@ main { max-width: 640px; margin: 0 auto; padding: 0 20px 60px; }
   outline-offset: 1px;
 }
 
-.pill-row { display: flex; gap: 8px; flex-wrap: wrap; }
-.pill {
-  background: white;
-  border: 1px solid var(--border);
-  padding: 9px 18px;
-  border-radius: 999px;
-  font-size: 14px;
-  cursor: pointer;
-  color: var(--ink);
-}
-.pill.selected { background: var(--plum); border-color: var(--plum); color: var(--ivory); }
-
 .primary-btn {
   width: 100%;
   background: var(--rose);
@@ -233,33 +220,6 @@ main { max-width: 640px; margin: 0 auto; padding: 0 20px 60px; }
 }
 .primary-btn:hover { background: var(--rose-dark); }
 .primary-btn:disabled { background: var(--border); cursor: not-allowed; }
-
-/* ===== Bookings list ===== */
-.bookings-view { padding: 24px 0; }
-.bookings-view h2 { font-family: var(--serif); color: var(--plum); }
-.booking-item {
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 14px 16px;
-  margin-bottom: 12px;
-  background: white;
-}
-.booking-item h4 { margin: 0 0 4px; font-family: var(--serif); color: var(--plum); }
-.booking-item p { margin: 2px 0; font-size: 13px; color: var(--muted); }
-.status-badge {
-  display: inline-block;
-  font-size: 11px;
-  padding: 2px 10px;
-  border-radius: 999px;
-  margin-top: 6px;
-}
-.status-pending { background: rgba(176,141,87,0.15); color: var(--gold); }
-.status-confirmed { background: rgba(76,140,90,0.15); color: #4C8C5A; }
-.status-cancelled { background: rgba(180,70,70,0.15); color: #B44646; }
-.cancel-link {
-  background: none; border: none; color: var(--rose-dark);
-  font-size: 13px; cursor: pointer; padding: 0; margin-top: 8px;
-}
 
 /* ===== Login ===== */
 .login-view { padding: 32px 0; max-width: 360px; }
@@ -312,7 +272,7 @@ main { max-width: 640px; margin: 0 auto; padding: 0 20px 60px; }
 }
 .admin-list-row strong { font-family: var(--serif); color: var(--plum); }
 
-.admin-service-row, .admin-booking-row {
+.admin-service-row {
   border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px;
   margin-bottom: 10px; background: white;
 }
@@ -325,21 +285,18 @@ main { max-width: 640px; margin: 0 auto; padding: 0 20px 60px; }
 .small-btn.danger { color: #B44646; border-color: #E9C9C9; }
 .small-btn.confirm { color: #4C8C5A; border-color: #C9E9CF; }
 
-/* ===== Bill Generation checklist ===== */
-.bill-cat-block { margin-bottom: 18px; }
-.bill-cat-title {
-  font-family: var(--serif); color: var(--plum); font-size: 15px;
-  margin: 0 0 6px; padding-bottom: 4px; border-bottom: 1px solid var(--gold);
+/* ===== Bill Generation: selected-items review ===== */
+.bill-review-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  padding: 10px 0; border-bottom: 1px solid var(--border);
 }
-.bill-group-title { font-size: 12px; color: var(--muted); margin: 10px 0 2px; text-transform: uppercase; letter-spacing: 0.03em; }
-.bill-item-row {
-  display: flex; align-items: center; gap: 10px;
-  padding: 8px 0; border-bottom: 1px solid var(--border);
-  cursor: pointer;
+.bill-review-row .bill-item-name { flex: 1; font-size: 14px; color: var(--ink); }
+.bill-review-row .bill-item-price { font-size: 14px; color: var(--plum); font-weight: 500; }
+.remove-item-btn {
+  background: none; border: none; color: var(--muted); font-size: 20px;
+  line-height: 1; cursor: pointer; padding: 0 4px;
 }
-.bill-item-row input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--rose); flex-shrink: 0; }
-.bill-item-name { flex: 1; font-size: 14px; color: var(--ink); }
-.bill-item-price { font-size: 13px; color: var(--muted); }
+.remove-item-btn:active { color: #B44646; }
 
 .bill-summary {
   margin-top: 20px; padding: 16px; background: white;
@@ -349,6 +306,30 @@ main { max-width: 640px; margin: 0 auto; padding: 0 20px 60px; }
 .bill-summary-row.bill-final {
   border-top: 1px solid var(--gold); margin-top: 8px; padding-top: 10px;
   font-family: var(--serif); font-size: 19px; color: var(--plum); font-weight: 600;
+}
+
+/* ===== Floating bill bar ===== */
+.bill-bar {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  background: var(--plum);
+  color: var(--ivory);
+  padding: 12px 20px;
+  display: none;
+  align-items: center;
+  justify-content: space-between;
+  z-index: 50;
+  box-shadow: 0 -2px 12px rgba(0,0,0,0.15);
+}
+.bill-bar-btn {
+  background: var(--rose);
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
 }
 
 /* ===== Toast ===== */

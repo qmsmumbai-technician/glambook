@@ -10,11 +10,9 @@ if ("serviceWorker" in navigator) {
 const state = {
   route: "home",
   selectedCategory: null,
-  selectedService: null,
-  bookingMode: null,
-  selectedTime: null,
   panelSubroute: null,
   editingClientCode: null,
+  billSelections: {},
 };
 
 const app = document.getElementById("app");
@@ -118,14 +116,25 @@ document.body.addEventListener("click", (e) => {
 
 document.getElementById("lockBtn").addEventListener("click", lockApp);
 
+// ===== Floating bill bar =====
+function updateBillBar() {
+  const bar = document.getElementById("billBar");
+  const items = Object.values(state.billSelections);
+  const onBillScreen = state.route === "panel" && state.panelSubroute === "bill";
+  if (items.length === 0 || onBillScreen) { bar.style.display = "none"; return; }
+  const total = items.reduce((sum, i) => sum + (i.price || 0), 0);
+  document.getElementById("billBarText").textContent = `${items.length} service${items.length > 1 ? "s" : ""} · ₹${total}`;
+  bar.style.display = "flex";
+}
+
 // ===== Render =====
 function render() {
   if (!isUnlocked()) { renderPinLock(); return; }
 
-  if (state.route === "home") return renderHome();
-  if (state.route === "category") return renderCategory();
-  if (state.route === "book") return renderBook();
-  if (state.route === "panel") return renderPanel();
+  if (state.route === "home") renderHome();
+  else if (state.route === "category") renderCategory();
+  else if (state.route === "panel") renderPanel();
+  updateBillBar();
 }
 
 // ---- Home: category grid ----
@@ -185,6 +194,9 @@ function renderCategory() {
       ${group.name && group.name !== cat.name ? `<h3 class="menu-group-title">${escapeHtml(group.name)}</h3>` : ""}
       ${group.items.map(item => `
         <div class="menu-item" data-item="${item.id}">
+          <label class="menu-item-check">
+            <input type="checkbox" class="service-check" data-id="${item.id}" ${state.billSelections[item.id] ? "checked" : ""}>
+          </label>
           <span class="menu-item-name">${escapeHtml(item.name)}</span>
           <span class="price-field">
             <span class="rupee">₹</span>
@@ -203,119 +215,28 @@ function renderCategory() {
     input.addEventListener("change", () => {
       const val = input.value === "" ? null : Number(input.value);
       setStoredPrice(input.dataset.priceFor, val);
+      if (state.billSelections[input.dataset.priceFor]) {
+        state.billSelections[input.dataset.priceFor].price = val;
+        updateBillBar();
+      }
     });
   });
 
-  wrap.querySelectorAll(".menu-item").forEach(row => {
-    row.addEventListener("click", () => {
-      const group = cat.groups.find(g => g.items.some(i => i.id === row.dataset.item));
-      const item = group.items.find(i => i.id === row.dataset.item);
-      state.selectedService = {
-        id: item.id,
-        name: item.name,
-        price: effectivePrice(item),
-        duration: item.duration || "",
-        mode: item.mode || "both",
-        categoryName: cat.name,
-      };
-      state.bookingMode = null;
-      state.selectedTime = null;
-      location.hash = "#/book";
-    });
-  });
-}
-
-// ---- Booking log (local storage — this is your appointment book) ----
-function getBookings() { return JSON.parse(localStorage.getItem("glambook_bookings") || "[]"); }
-function saveBookings(list) { localStorage.setItem("glambook_bookings", JSON.stringify(list)); }
-function addBooking(booking) {
-  const list = getBookings();
-  booking.id = (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random());
-  list.push(booking);
-  saveBookings(list);
-}
-function updateBookingStatus(id, status) {
-  const list = getBookings();
-  const b = list.find(x => x.id === id);
-  if (b) b.status = status;
-  saveBookings(list);
-}
-
-function renderBook() {
-  if (!state.selectedService) { location.hash = "#/home"; return; }
-  const tpl = document.getElementById("tpl-book");
-  app.innerHTML = "";
-  app.appendChild(tpl.content.cloneNode(true));
-
-  const s = state.selectedService;
-  document.getElementById("bookServiceName").textContent = s.name;
-  const priceText = s.price ? `₹${s.price}` : "Price on request";
-  document.getElementById("bookServiceMeta").textContent = [priceText, s.duration, s.categoryName].filter(Boolean).join(" · ");
-
-  const modeOpts = document.getElementById("modeOptions");
-  const modes = s.mode === "both" ? ["home", "salon"] : [s.mode];
-  modeOpts.innerHTML = modes.map(m =>
-    `<button class="pill" data-mode="${m}">${m === "home" ? "At client's home" : "At the salon"}</button>`
-  ).join("");
-  if (modes.length === 1) {
-    state.bookingMode = modes[0];
-    modeOpts.querySelector(".pill").classList.add("selected");
-    document.getElementById("addressGroup").style.display = modes[0] === "home" ? "block" : "none";
-  }
-  modeOpts.querySelectorAll(".pill").forEach(p => {
-    p.addEventListener("click", () => {
-      state.bookingMode = p.dataset.mode;
-      modeOpts.querySelectorAll(".pill").forEach(x => x.classList.remove("selected"));
-      p.classList.add("selected");
-      document.getElementById("addressGroup").style.display = p.dataset.mode === "home" ? "block" : "none";
+  wrap.querySelectorAll(".service-check").forEach(cb => {
+    cb.addEventListener("click", (e) => e.stopPropagation());
+    cb.addEventListener("change", () => {
+      const id = cb.dataset.id;
+      const group = cat.groups.find(g => g.items.some(i => i.id === id));
+      const item = group.items.find(i => i.id === id);
+      if (cb.checked) {
+        state.billSelections[id] = { name: item.name, price: effectivePrice(item), categoryName: cat.name };
+      } else {
+        delete state.billSelections[id];
+      }
+      updateBillBar();
     });
   });
 
-  document.querySelectorAll("#timeOptions .pill").forEach(p => {
-    p.addEventListener("click", () => {
-      state.selectedTime = p.dataset.time;
-      document.querySelectorAll("#timeOptions .pill").forEach(x => x.classList.remove("selected"));
-      p.classList.add("selected");
-    });
-  });
-
-  const dateInput = document.getElementById("dateInput");
-  dateInput.min = new Date().toISOString().split("T")[0];
-
-  document.getElementById("confirmBookingBtn").addEventListener("click", submitBooking);
-}
-
-function submitBooking() {
-  const name = document.getElementById("nameInput").value.trim();
-  const phone = document.getElementById("phoneInput").value.trim();
-  const date = document.getElementById("dateInput").value;
-  const address = document.getElementById("addressInput").value.trim();
-  const notes = document.getElementById("notesInput").value.trim();
-
-  if (!state.bookingMode) return toast("Please choose where the service will happen");
-  if (!date) return toast("Please pick a date");
-  if (!state.selectedTime) return toast("Please pick a time of day");
-  if (!name) return toast("Please enter the client's name");
-  if (!/^\d{10}$/.test(phone)) return toast("Please enter a valid 10-digit phone number");
-  if (state.bookingMode === "home" && !address) return toast("Please enter the client's address");
-
-  addBooking({
-    serviceId: state.selectedService.id,
-    serviceName: state.selectedService.name,
-    price: state.selectedService.price,
-    mode: state.bookingMode,
-    date,
-    timeOfDay: state.selectedTime,
-    address: state.bookingMode === "home" ? address : "",
-    notes,
-    clientName: name,
-    clientPhone: phone,
-    status: "confirmed",
-    createdAt: new Date().toISOString(),
-  });
-
-  toast("Booking saved");
-  location.hash = "#/panel/bookings";
 }
 
 // ===== Panel =====
@@ -326,7 +247,6 @@ function renderPanel() {
 
   const sub = state.panelSubroute;
   if (!sub) renderPanelDashboard();
-  else if (sub === "bookings") renderPanelBookings();
   else if (sub === "clients") renderPanelClients();
   else if (sub === "discount") renderPanelDiscount();
   else if (sub === "history") renderPanelHistory();
@@ -336,7 +256,6 @@ function renderPanel() {
 }
 
 const icons = {
-  bookings: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5" width="16" height="16" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/></svg>`,
   client: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c1.5-4 4.5-6 7-6s5.5 2 7 6"/></svg>`,
   discount: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12 12 4h8v8l-8 8-8-8Z"/><circle cx="14.5" cy="9.5" r="1.2" fill="currentColor" stroke="none"/></svg>`,
   history: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h13a3 3 0 0 1 3 3v11H7a3 3 0 0 1-3-3V5Z"/><path d="M8 9h8M8 13h5"/></svg>`,
@@ -350,7 +269,6 @@ function renderPanelDashboard() {
   content.innerHTML = `
     <h2>Panel</h2>
     <div class="admin-menu">
-      <button class="admin-menu-btn" data-route="panel/bookings"><span class="admin-menu-icon">${icons.bookings}</span><span>Bookings</span></button>
       <button class="admin-menu-btn" data-route="panel/clients"><span class="admin-menu-icon">${icons.client}</span><span>Client Details</span></button>
       <button class="admin-menu-btn" data-route="panel/discount"><span class="admin-menu-icon">${icons.discount}</span><span>Special Discount</span></button>
       <button class="admin-menu-btn" data-route="panel/history"><span class="admin-menu-icon">${icons.history}</span><span>Client History</span></button>
@@ -360,42 +278,6 @@ function renderPanelDashboard() {
     </div>
     <p class="fine-print" style="margin-top:20px">Everything here is stored only on this device.</p>
   `;
-}
-
-// ---- Bookings ----
-function renderPanelBookings() {
-  const content = document.getElementById("panelContent");
-  const backHtml = `<button class="back-btn" data-route="panel">&larr; Panel</button><h2>Bookings</h2>`;
-  const bookings = getBookings().sort((a, b) => (a.date < b.date ? 1 : -1));
-
-  if (bookings.length === 0) {
-    content.innerHTML = backHtml + `<p class="muted">No bookings yet.</p>`;
-    return;
-  }
-
-  content.innerHTML = backHtml + bookings.map(b => `
-    <div class="admin-booking-row">
-      <div class="admin-row-top">
-        <strong>${escapeHtml(b.serviceName)}</strong>
-        <span class="status-badge status-${b.status}">${capitalize(b.status)}</span>
-      </div>
-      <p class="muted">${escapeHtml(b.clientName)} · ${escapeHtml(b.clientPhone)}</p>
-      <p class="muted">${b.date} · ${capitalize(b.timeOfDay)} · ${b.mode === "home" ? "At client's home" : "At salon"}</p>
-      ${b.mode === "home" ? `<p class="muted">${escapeHtml(b.address)}</p>` : ""}
-      ${b.notes ? `<p class="muted">Note: ${escapeHtml(b.notes)}</p>` : ""}
-      <div class="admin-actions">
-        ${b.status !== "cancelled" ? `<button class="small-btn danger" data-cancel="${b.id}">Cancel</button>` : ""}
-      </div>
-    </div>
-  `).join("");
-
-  content.querySelectorAll("[data-cancel]").forEach(btn => {
-    btn.addEventListener("click", () => {
-      updateBookingStatus(btn.dataset.cancel, "cancelled");
-      toast("Booking cancelled");
-      renderPanelBookings();
-    });
-  });
 }
 
 // ---- Local CRM storage ----
@@ -584,25 +466,16 @@ function renderPanelHistory() {
 // ---- Bill Generation ----
 function renderPanelBill() {
   const content = document.getElementById("panelContent");
+  const items = Object.entries(state.billSelections).map(([id, v]) => ({ id, ...v }));
 
-  const checklistHtml = categories.map(cat => `
-    <div class="bill-cat-block">
-      <h4 class="bill-cat-title">${escapeHtml(cat.name)}</h4>
-      ${cat.groups.map(g => `
-        ${g.name && g.name !== cat.name ? `<p class="bill-group-title">${escapeHtml(g.name)}</p>` : ""}
-        ${g.items.map(item => {
-          const price = effectivePrice(item);
-          return `
-            <label class="bill-item-row">
-              <input type="checkbox" class="bill-check" data-id="${item.id}" data-price="${price ?? 0}" data-name="${escapeHtml(item.name)}">
-              <span class="bill-item-name">${escapeHtml(item.name)}</span>
-              <span class="bill-item-price">${price ? "₹" + price : "—"}</span>
-            </label>
-          `;
-        }).join("")}
-      `).join("")}
-    </div>
-  `).join("");
+  if (items.length === 0) {
+    content.innerHTML = `
+      <button class="back-btn" data-route="panel">&larr; Panel</button>
+      <h2>Bill Generation</h2>
+      <p class="muted">No services selected yet. Go to a category and tick the checkbox next to each service the customer's having — it shows up here.</p>
+    `;
+    return;
+  }
 
   content.innerHTML = `
     <button class="back-btn" data-route="panel">&larr; Panel</button>
@@ -610,8 +483,16 @@ function renderPanelBill() {
     <div class="field-group"><label>Client Code</label><input id="bCode" placeholder="e.g. CL001"></div>
     <p class="fine-print" id="bClientPreview"></p>
 
-    <h3 class="admin-subheading">Tick services taken</h3>
-    <div id="billChecklist">${checklistHtml}</div>
+    <h3 class="admin-subheading">Selected services</h3>
+    <div id="billReviewList">
+      ${items.map(it => `
+        <div class="bill-review-row" data-id="${it.id}">
+          <span class="bill-item-name">${escapeHtml(it.name)}</span>
+          <span class="bill-item-price">₹${it.price ?? 0}</span>
+          <button class="remove-item-btn" data-remove="${it.id}" title="Remove">&times;</button>
+        </div>
+      `).join("")}
+    </div>
 
     <div class="bill-summary">
       <div class="bill-summary-row"><span>Subtotal</span><span id="billSubtotal">₹0</span></div>
@@ -639,9 +520,17 @@ function renderPanelBill() {
     document.getElementById("bClientPreview").textContent = c ? `${c.name} · ${c.mobile || "no number on file"}` : "";
   });
 
+  document.querySelectorAll("[data-remove]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      delete state.billSelections[btn.dataset.remove];
+      updateBillBar();
+      renderPanelBill();
+    });
+  });
+
   function computeTotals() {
-    const checked = [...document.querySelectorAll(".bill-check:checked")];
-    const subtotal = checked.reduce((sum, c) => sum + Number(c.dataset.price || 0), 0);
+    const current = Object.entries(state.billSelections).map(([id, v]) => ({ id, ...v }));
+    const subtotal = current.reduce((sum, i) => sum + (i.price || 0), 0);
 
     const raw = discountInput.value.trim();
     let discountAmount = 0;
@@ -656,17 +545,14 @@ function renderPanelBill() {
     const final = Math.max(0, Math.round(subtotal - discountAmount));
     document.getElementById("billSubtotal").textContent = "₹" + subtotal;
     document.getElementById("billFinalTotal").textContent = "₹" + final;
-    return { checked, subtotal, discountAmount, final, raw };
+    return { items: current, subtotal, discountAmount, final, raw };
   }
 
-  document.querySelectorAll(".bill-check").forEach(cb => {
-    cb.addEventListener("change", () => { saved = false; computeTotals(); });
-  });
   discountInput.addEventListener("input", () => { saved = false; computeTotals(); });
   computeTotals();
 
   function billMessage(totals) {
-    const lines = totals.checked.map(c => `- ${c.dataset.name}: ₹${c.dataset.price}`).join("\n");
+    const lines = totals.items.map(i => `- ${i.name}: ₹${i.price ?? 0}`).join("\n");
     const discountLine = totals.discountAmount ? `\nDiscount: -₹${Math.round(totals.discountAmount)}` : "";
     return `Hi! Here's your bill from ${brand.appName}:\n${lines}\nSubtotal: ₹${totals.subtotal}${discountLine}\nFinal Total: ₹${totals.final}\nThank you for visiting!`;
   }
@@ -675,19 +561,23 @@ function renderPanelBill() {
     return c ? c.mobile : "";
   }
   function doSave(totals) {
-    const clientCode = codeInput.value.trim();
     saveBillRecord({
-      clientCode,
-      servicesTaken: totals.checked.map(c => c.dataset.name).join(", "),
+      clientCode: codeInput.value.trim(),
+      servicesTaken: totals.items.map(i => i.name).join(", "),
       totalAmount: totals.final,
       discount: totals.raw || null,
       date: new Date().toISOString().split("T")[0],
     });
     saved = true;
   }
+  function finishAndReset() {
+    state.billSelections = {};
+    updateBillBar();
+    renderPanelBill();
+  }
   function validate(totals) {
     if (!codeInput.value.trim()) { toast("Enter a Client Code"); return false; }
-    if (totals.checked.length === 0) { toast("Tick at least one service"); return false; }
+    if (totals.items.length === 0) { toast("No services selected"); return false; }
     return true;
   }
 
@@ -696,7 +586,7 @@ function renderPanelBill() {
     if (!validate(totals)) return;
     doSave(totals);
     toast("Bill saved");
-    renderPanelBill();
+    finishAndReset();
   });
 
   document.getElementById("sendBillWhatsApp").addEventListener("click", () => {
@@ -704,14 +594,14 @@ function renderPanelBill() {
     if (!validate(totals)) return;
     if (!saved) doSave(totals);
     sendViaWhatsApp(resolvedMobile(), billMessage(totals));
-    renderPanelBill();
+    finishAndReset();
   });
   document.getElementById("sendBillSMS").addEventListener("click", () => {
     const totals = computeTotals();
     if (!validate(totals)) return;
     if (!saved) doSave(totals);
     sendViaSMS(resolvedMobile(), billMessage(totals));
-    renderPanelBill();
+    finishAndReset();
   });
 }
 
@@ -753,7 +643,6 @@ function collectBackupData() {
     exportedAt: new Date().toISOString(),
     appName: brand.appName,
     prices: JSON.parse(localStorage.getItem("glambook_prices") || "{}"),
-    bookings: JSON.parse(localStorage.getItem("glambook_bookings") || "[]"),
     clients: JSON.parse(localStorage.getItem("glambook_clients") || "{}"),
     discounts: JSON.parse(localStorage.getItem("glambook_discounts") || "{}"),
     bills: JSON.parse(localStorage.getItem("glambook_bills") || "[]"),
@@ -777,7 +666,6 @@ function restoreBackup(fileText) {
   try { data = JSON.parse(fileText); } catch { return false; }
   if (!data || typeof data !== "object") return false;
   localStorage.setItem("glambook_prices", JSON.stringify(data.prices || {}));
-  localStorage.setItem("glambook_bookings", JSON.stringify(data.bookings || []));
   localStorage.setItem("glambook_clients", JSON.stringify(data.clients || {}));
   localStorage.setItem("glambook_discounts", JSON.stringify(data.discounts || {}));
   localStorage.setItem("glambook_bills", JSON.stringify(data.bills || []));
