@@ -21,6 +21,11 @@ const icon = {
 
 // mode: "home" | "salon" | "both" — controls which booking-location
 // options show up for that item. Defaults to "both" if omitted.
+//
+// A group's "name" can be left as "" (empty string) for items that
+// sit directly under the category with no sub-heading of their own —
+// e.g. Hands & Feet has "Manicure" and "Pedicure" as bare items, with
+// only "Body Treatment" as an actual named group underneath.
 
 export const categories = [
   {
@@ -118,7 +123,7 @@ export const categories = [
     icon: icon.hands,
     groups: [
       {
-        name: "Manicure & Pedicure",
+        name: "",
         items: [
           { id: "manicure", name: "Manicure", price: null },
           { id: "pedicure", name: "Pedicure", price: null },

@@ -178,7 +178,7 @@ function renderCategory() {
   const wrap = document.getElementById("menuGroups");
   wrap.innerHTML = cat.groups.map(group => `
     <div class="menu-group">
-      ${cat.groups.length > 1 || group.name !== cat.name ? `<h3 class="menu-group-title">${escapeHtml(group.name)}</h3>` : ""}
+      ${group.name && group.name !== cat.name ? `<h3 class="menu-group-title">${escapeHtml(group.name)}</h3>` : ""}
       ${group.items.map(item => `
         <div class="menu-item" data-item="${item.id}">
           <span class="menu-item-name">${escapeHtml(item.name)}</span>
