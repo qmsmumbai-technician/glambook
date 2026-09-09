@@ -375,6 +375,7 @@ function renderPanel() {
   else if (sub === "reminder") renderPanelReminder();
   else if (sub === "backup") renderPanelBackup();
   else if (sub === "academy") renderPanelAcademy();
+  else if (sub === "occasions") renderPanelOccasions();
 }
 
 const icons = {
@@ -385,6 +386,7 @@ const icons = {
   reminder: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a5 5 0 0 0-5 5v3.5L5 15h14l-2-3.5V8a5 5 0 0 0-5-5Z"/><path d="M9.5 19a2.5 2.5 0 0 0 5 0"/></svg>`,
   backup: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11m0 0-3.5-3.5M12 15l3.5-3.5"/><path d="M5 16v2a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-2"/></svg>`,
   academy: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 9 12 4l10 5-10 5-10-5Z"/><path d="M6 11.5V16c0 1.5 2.7 3 6 3s6-1.5 6-3v-4.5"/><path d="M22 9v6"/></svg>`,
+  occasions: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5" width="16" height="16" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/><path d="M12 14v4M10 16h4"/></svg>`,
 };
 
 function renderPanelDashboard() {
@@ -400,6 +402,7 @@ function renderPanelDashboard() {
       <button class="admin-menu-btn" data-route="panel/reminder"><span class="admin-menu-icon">${icons.reminder}</span><span>Reminder</span></button>
       <button class="admin-menu-btn" data-route="panel/backup"><span class="admin-menu-icon">${icons.backup}</span><span>Backup & Restore</span></button>
       <button class="admin-menu-btn" data-route="panel/academy"><span class="admin-menu-icon">${icons.academy}</span><span>Academy</span></button>
+      <button class="admin-menu-btn" data-route="panel/occasions"><span class="admin-menu-icon">${icons.occasions}</span><span>Upcoming Occasions</span></button>
     </div>
     <p class="fine-print" style="margin-top:20px">Everything here is stored only on this device.</p>
   `;
@@ -506,6 +509,77 @@ function renderPanelAcademy() {
   });
 }
 
+// ---- Upcoming Occasions ----
+function daysUntilOccasion(dateStr) {
+  if (!dateStr) return null;
+  const d = new Date(dateStr + "T00:00:00");
+  if (isNaN(d)) return null;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  let occurrence = new Date(today.getFullYear(), d.getMonth(), d.getDate());
+  occurrence.setHours(0, 0, 0, 0);
+  if (occurrence < today) occurrence = new Date(today.getFullYear() + 1, d.getMonth(), d.getDate());
+  const days = Math.round((occurrence - today) / 86400000);
+  return { days, date: occurrence };
+}
+
+function renderPanelOccasions() {
+  const content = document.getElementById("panelContent");
+  const windowDays = 7;
+  const clients = Object.values(getClients());
+  const upcoming = [];
+
+  clients.forEach(c => {
+    const b = daysUntilOccasion(c.birthDate);
+    if (b && b.days >= 0 && b.days <= windowDays) upcoming.push({ client: c, type: "Birthday", ...b });
+    const a = daysUntilOccasion(c.anniversaryDate);
+    if (a && a.days >= 0 && a.days <= windowDays) upcoming.push({ client: c, type: "Anniversary", ...a });
+  });
+  upcoming.sort((x, y) => x.days - y.days);
+
+  const backHtml = `<button class="back-btn" data-route="panel">&larr; Panel</button><h2>Upcoming Occasions</h2><p class="muted">Birthdays and anniversaries in the next ${windowDays} days.</p>`;
+
+  if (upcoming.length === 0) {
+    content.innerHTML = backHtml + `<p class="muted">Nothing coming up in the next ${windowDays} days.</p>`;
+    return;
+  }
+
+  content.innerHTML = backHtml + upcoming.map((u, i) => `
+    <div class="admin-list-row occasion-row">
+      <div>
+        <strong>${escapeHtml(u.client.name)}</strong>
+        <p class="muted">${u.type} · ${u.date.toLocaleDateString(undefined, { month: "short", day: "numeric" })} · ${u.days === 0 ? "Today" : u.days === 1 ? "Tomorrow" : `in ${u.days} days`}</p>
+      </div>
+      <div class="admin-actions">
+        <button class="small-btn" data-wa="${i}">WhatsApp</button>
+        <button class="small-btn" data-sms="${i}">SMS</button>
+      </div>
+    </div>
+  `).join("");
+
+  function occasionMessage(u) {
+    if (u.type === "Birthday") {
+      return `Happy Birthday, ${u.client.name}! Wishing you a wonderful day from all of us at ${brand.appName}.`;
+    }
+    const discounts = getDiscounts();
+    const discountLine = discounts.clientAnniversaryDiscount ? ` To celebrate, enjoy ${discounts.clientAnniversaryDiscount} off your next visit.` : "";
+    return `Happy Anniversary, ${u.client.name}!${discountLine} With love from ${brand.appName}.`;
+  }
+
+  content.querySelectorAll("[data-wa]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const u = upcoming[Number(btn.dataset.wa)];
+      sendViaWhatsApp(u.client.mobile, occasionMessage(u));
+    });
+  });
+  content.querySelectorAll("[data-sms]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const u = upcoming[Number(btn.dataset.sms)];
+      sendViaSMS(u.client.mobile, occasionMessage(u));
+    });
+  });
+}
+
 // ---- Local CRM storage ----
 function getClients() { return JSON.parse(localStorage.getItem("glambook_clients") || "{}"); }
 function saveClientRecord(client) {
@@ -557,9 +631,9 @@ function renderPanelClients() {
   content.innerHTML = `
     <button class="back-btn" data-route="panel">&larr; Panel</button>
     <h2>Client Details</h2>
+    <p class="muted">The client's mobile number is used as their unique ID — no separate code to invent or remember.</p>
     <div class="field-group"><label>Name of Client</label><input id="cName" value="${editing ? escapeHtml(editing.name) : ""}"></div>
-    <div class="field-group"><label>Client Code</label><input id="cCode" placeholder="e.g. CL001" value="${editing ? escapeHtml(editing.clientCode) : ""}" ${editing ? "disabled" : ""}></div>
-    <div class="field-group"><label>Mobile Number</label><input id="cMobile" type="tel" value="${editing ? escapeHtml(editing.mobile) : ""}"></div>
+    <div class="field-group"><label>Mobile Number</label><input id="cMobile" type="tel" placeholder="10-digit mobile number" value="${editing ? escapeHtml(editing.mobile) : ""}" ${editing ? "disabled" : ""}></div>
     <div class="field-group"><label>Birth Date</label><input id="cBirth" type="date" value="${editing ? editing.birthDate || "" : ""}"></div>
     <div class="field-group"><label>Wedding Anniversary Date</label><input id="cAnniv" type="date" value="${editing ? editing.anniversaryDate || "" : ""}"></div>
     <button class="primary-btn" id="saveClientBtn">${editing ? "Update Client" : "Save Client"}</button>
@@ -572,15 +646,15 @@ function renderPanelClients() {
 
   document.getElementById("saveClientBtn").addEventListener("click", () => {
     const name = document.getElementById("cName").value.trim();
-    const clientCode = document.getElementById("cCode").value.trim();
     const mobile = document.getElementById("cMobile").value.trim();
     const birthDate = document.getElementById("cBirth").value;
     const anniversaryDate = document.getElementById("cAnniv").value;
 
-    if (!name || !clientCode) return toast("Name and Client Code are required");
-    if (!editing && getClient(clientCode)) return toast("That Client Code already exists");
+    if (!name) return toast("Name is required");
+    if (!/^\d{10}$/.test(mobile)) return toast("Enter a valid 10-digit mobile number");
+    if (!editing && getClient(mobile)) return toast("A client with that mobile number already exists");
 
-    saveClientRecord({ name, clientCode, mobile, birthDate, anniversaryDate });
+    saveClientRecord({ name, clientCode: mobile, mobile, birthDate, anniversaryDate });
     toast(editing ? "Client updated" : "Client saved");
     state.editingClientCode = null;
     renderPanelClients();
@@ -604,7 +678,7 @@ function renderClientList() {
     <div class="admin-list-row" data-code="${escapeHtml(c.clientCode)}">
       <div>
         <strong>${escapeHtml(c.name)}</strong>
-        <p class="muted">${escapeHtml(c.clientCode)} · ${escapeHtml(c.mobile || "no number")}</p>
+        <p class="muted">${escapeHtml(c.mobile || c.clientCode)}</p>
       </div>
       <div class="admin-actions">
         <button class="small-btn" data-edit="${escapeHtml(c.clientCode)}">Edit</button>
@@ -655,7 +729,7 @@ function renderPanelHistory() {
   content.innerHTML = `
     <button class="back-btn" data-route="panel">&larr; Panel</button>
     <h2>Client History</h2>
-    <div class="field-group"><label>Enter Client Code</label><input id="hCode" placeholder="e.g. CL001"></div>
+    <div class="field-group"><label>Enter Client Mobile Number</label><input id="hCode" type="tel" placeholder="10-digit mobile number"></div>
     <button class="primary-btn" id="searchHistoryBtn">Search</button>
     <div id="historyResult" style="margin-top:20px"></div>
   `;
@@ -714,7 +788,7 @@ function renderPanelBill() {
       </div>
     </div>
     <h2>Bill Generation</h2>
-    <div class="field-group"><label>Client Code</label><input id="bCode" placeholder="e.g. CL001"></div>
+    <div class="field-group"><label>Client Mobile Number</label><input id="bCode" type="tel" placeholder="10-digit mobile number"></div>
     <p class="fine-print" id="bClientPreview"></p>
 
     <h3 class="admin-subheading">Selected services</h3>
@@ -827,7 +901,7 @@ function renderPanelBill() {
     renderPanelBill();
   }
   function validate(totals) {
-    if (!codeInput.value.trim()) { toast("Enter a Client Code"); return false; }
+    if (!codeInput.value.trim()) { toast("Enter the client's mobile number"); return false; }
     if (totals.items.length === 0) { toast("No services selected"); return false; }
     return true;
   }
@@ -866,9 +940,8 @@ function renderPanelReminder() {
   content.innerHTML = `
     <button class="back-btn" data-route="panel">&larr; Panel</button>
     <h2>Reminder</h2>
-    <div class="field-group"><label>Client Mobile</label><input id="rMobile" type="tel" placeholder="10-digit number"></div>
-    <p class="muted" style="text-align:center;margin:4px 0">— or —</p>
-    <div class="field-group"><label>Client Code</label><input id="rCode" placeholder="e.g. CL001"></div>
+    <div class="field-group"><label>Client Mobile Number</label><input id="rMobile" type="tel" placeholder="10-digit mobile number"></div>
+    <p class="fine-print" id="rClientPreview"></p>
     <div class="field-group"><label>Write a Statement</label><textarea id="rMessage" rows="3" placeholder="e.g. It's time for your monthly hair spa!"></textarea></div>
     <div class="admin-actions">
       <button class="small-btn" id="sendReminderWhatsApp">Send via WhatsApp</button>
@@ -876,19 +949,17 @@ function renderPanelReminder() {
     </div>
   `;
 
-  function resolvedMobile() {
-    const direct = document.getElementById("rMobile").value.trim();
-    if (direct) return direct;
-    const code = document.getElementById("rCode").value.trim();
-    const c = getClient(code);
-    return c ? c.mobile : "";
-  }
+  const mobileInput = document.getElementById("rMobile");
+  mobileInput.addEventListener("input", () => {
+    const c = getClient(mobileInput.value.trim());
+    document.getElementById("rClientPreview").textContent = c ? c.name : "";
+  });
 
   document.getElementById("sendReminderWhatsApp").addEventListener("click", () => {
-    sendViaWhatsApp(resolvedMobile(), document.getElementById("rMessage").value.trim());
+    sendViaWhatsApp(mobileInput.value.trim(), document.getElementById("rMessage").value.trim());
   });
   document.getElementById("sendReminderSMS").addEventListener("click", () => {
-    sendViaSMS(resolvedMobile(), document.getElementById("rMessage").value.trim());
+    sendViaSMS(mobileInput.value.trim(), document.getElementById("rMessage").value.trim());
   });
 }
 

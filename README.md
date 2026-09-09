@@ -12,13 +12,14 @@ This is a **private, single-user app** for you (the parlour owner) — not a cus
    - **Price field** — tap to set or edit that service's price, saved instantly.
 4. **Bottom bar** appears once you've ticked at least one service, showing a running count and total — tap **Review & Bill** any time to jump to Bill Generation.
 5. **Panel icon** (top right, grid icon) → seven tools:
-   - **Client Details** — save clients (name, code, mobile, birthday, anniversary).
+   - **Client Details** — save clients (name, mobile number — used as their unique ID, birthday, anniversary).
    - **Special Discount** — festival / anniversary discount notes, for your own reference.
    - **Client History** — look up a client by code, see their saved bills.
    - **Bill Generation** — shows whatever you've ticked from the category menus, with a live subtotal. Enter the client code, add **Additional Charges** if any (a flat ₹ amount, added after subtotal), then a **Discount** ("10%" or "₹200") if you're giving one — Final Total updates live as you fill these in. Remove anything with the ✕. Tap **Save Bill** to record it, **Discard** to clear everything without saving, or **Confirm & Send** to save and open WhatsApp/SMS with the itemized bill ready to send. Selections clear automatically after saving/sending/discarding, ready for the next customer.
    - **Reminder** — write a message and send it to a client (by mobile or code) via WhatsApp or SMS.
    - **Backup & Restore** — export everything to a `.json` file you can save elsewhere; restore from that file if you ever switch phones or lose data.
    - **Academy** — a separate price list for training/course purposes. Shows every service across all categories with its own price field (independent of the regular customer price) and a **"D"** field for course duration (free text — "2-3 Month", etc.). Each service also has a checkbox — tick it to add that service to the running bill using its **Academy price**, distinct from a regular sale of the same service (both can be ticked at once and will show as separate line items).
+   - **Upcoming Occasions** — lists any saved client whose birthday or anniversary falls within the next 7 days, soonest first. Each entry has one-tap **WhatsApp**/**SMS** buttons with a ready-made greeting (anniversary messages include your saved Client Anniversary Discount, if set). No limit on how many times you can message the same person — nothing is tracked or blocked.
 
 ## About the "Send" buttons (WhatsApp/SMS)
 A plain web app can't silently auto-send SMS or WhatsApp messages — there's no browser permission for that without a paid gateway (Twilio for SMS, WhatsApp Business API for WhatsApp), both needing a backend server and per-message cost. What's built instead: tapping **Send via WhatsApp** or **Send via SMS** opens that app with your message pre-typed to the client's number — one more tap in WhatsApp/Messages actually sends it.
