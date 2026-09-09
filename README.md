@@ -4,7 +4,7 @@ This is a **private, single-user app** for you (the parlour owner) — not a cus
 
 ## How it works
 1. **Open the app → PIN screen.** Enter the PIN set in `brand-config.js` (`appPin`) to get in. Tap the lock icon in the header any time to re-lock it.
-2. **Home screen** — your logo, name, contact number up top; a grid of service categories below (Hair, Skincare, Grooming, etc.).
+2. **Home screen** — your logo, name, contact number up top; a grid of service categories below (Hair, Skincare, Grooming, Hands & Feet, Special Occasion Makeup, Body Treatments, Mahendi).
 3. **Tap a category** → itemized menu grouped the way you specified (e.g. Hair Cut / Hair Colouring / Hair Treatment). Each service row has, left to right:
    - **Checkbox** — tick when a customer takes that service; adds it to a running bill.
    - **Service name** (styled as a link) — tap to open a write-up screen for that service, where you can type notes and save them. Two buttons there: **Add & Save** (saves your text and returns) and **Previous Screen** (goes back without saving).

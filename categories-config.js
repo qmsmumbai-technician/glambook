@@ -23,6 +23,7 @@ const icon = {
   hands: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 12V5a1.5 1.5 0 0 1 3 0v6M11 11V4a1.5 1.5 0 0 1 3 0v7M14 11.5V6a1.5 1.5 0 0 1 3 0v9c0 4-2.5 7-6 7s-6-2-7-5l-1.5-4A1.4 1.4 0 0 1 5 11a1.4 1.4 0 0 1 2 .3L8 13"/></svg>`,
   makeup: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h5l1 4-3.5 3.5V21h-2v-10.5L6 7l1-4h2Z"/></svg>`,
   body: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c-4 3-6 5-6 9a6 6 0 0 0 12 0c0-4-2-6-6-9Z"/><path d="M12 12c1.5 1.5 1.5 3.5 0 5"/></svg>`,
+  mahendi: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c3 4 6 7 6 11a6 6 0 0 1-12 0c0-4 3-7 6-11Z"/><path d="M9 14c1 1 2 1 3 0s2-1 3 0"/><circle cx="12" cy="10" r="0.6" fill="currentColor" stroke="none"/></svg>`,
 };
 
 // mode: "home" | "salon" | "both" — controls which booking-location
@@ -185,6 +186,23 @@ export const categories = [
           { id: "body-polishing", name: "Body Polishing", price: null, mode: "salon" },
           { id: "exfoliating-scrub", name: "Exfoliating Scrub", price: null, mode: "salon" },
           { id: "body-wrap", name: "Body Wrap", price: null, mode: "salon" },
+        ],
+      },
+    ],
+  },
+  {
+    id: "mahendi",
+    name: "Mahendi",
+    icon: icon.mahendi,
+    groups: [
+      {
+        name: "",
+        items: [
+          { id: "bridal-mahendi", name: "Bridal Mahendi", price: null },
+          { id: "party-mahendi", name: "Party Mahendi", price: null },
+          { id: "simple-mahendi", name: "Simple Mahendi", price: null },
+          { id: "arabic-mahendi", name: "Arabic Mahendi", price: null },
+          { id: "kids-mahendi", name: "Kids Mahendi", price: null },
         ],
       },
     ],
