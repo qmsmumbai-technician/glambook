@@ -381,6 +381,20 @@ main { max-width: 640px; margin: 0 auto; padding: 0 20px 60px; }
 .admin-view h2 { font-family: var(--serif); color: var(--plum); margin: 4px 0 20px; font-size: 22px; }
 .admin-subheading { font-family: var(--serif); color: var(--plum); font-size: 16px; margin: 24px 0 10px; }
 
+.bill-letterhead {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  margin-bottom: 16px;
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+.bill-letterhead-logo { width: 36px; height: 36px; object-fit: contain; flex-shrink: 0; }
+.bill-letterhead-name { font-family: var(--serif); font-size: 15px; color: var(--plum); font-weight: 600; }
+.bill-letterhead-tagline { font-size: 11px; color: var(--muted); }
+
 .admin-menu {
   display: grid;
   grid-template-columns: repeat(2, 1fr);

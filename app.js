@@ -706,6 +706,13 @@ function renderPanelBill() {
 
   content.innerHTML = `
     <button class="back-btn" data-route="panel">&larr; Panel</button>
+    <div class="bill-letterhead">
+      ${brand.logoUrl ? `<img src="${brand.logoUrl}" alt="${escapeHtml(brand.appName)}" class="bill-letterhead-logo">` : ""}
+      <div>
+        <div class="bill-letterhead-name">${escapeHtml(brand.appName)}</div>
+        <div class="bill-letterhead-tagline">${escapeHtml(brand.tagline)}</div>
+      </div>
+    </div>
     <h2>Bill Generation</h2>
     <div class="field-group"><label>Client Code</label><input id="bCode" placeholder="e.g. CL001"></div>
     <p class="fine-print" id="bClientPreview"></p>
@@ -797,7 +804,7 @@ function renderPanelBill() {
     const lines = totals.items.map(i => `- ${i.name} (${i.categoryName || "-"}): ₹${i.price ?? 0}`).join("\n");
     const additionalLine = totals.additional ? `\nAdditional Charges: ₹${totals.additional}` : "";
     const discountLine = totals.discountAmount ? `\nDiscount: -₹${Math.round(totals.discountAmount)}` : "";
-    return `Hi! Here's your bill from ${brand.appName}:\n${lines}\nSubtotal: ₹${totals.subtotal}${additionalLine}${discountLine}\nFinal Total: ₹${totals.final}\nThank you for visiting!`;
+    return `*${brand.appName}*\n${brand.tagline}\n\n${lines}\nSubtotal: ₹${totals.subtotal}${additionalLine}${discountLine}\nFinal Total: ₹${totals.final}\n\nThank you for visiting!`;
   }
   function resolvedMobile() {
     const c = getClient(codeInput.value.trim());
@@ -829,8 +836,7 @@ function renderPanelBill() {
     const totals = computeTotals();
     if (!validate(totals)) return;
     doSave(totals);
-    toast("Bill saved");
-    finishAndReset();
+    toast("Bill saved — tap Confirm & Send when ready");
   });
 
   document.getElementById("discardBillBtn").addEventListener("click", () => {
