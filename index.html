@@ -13,7 +13,7 @@
 <body>
 
 <header class="topbar">
-  <div class="brand-block">
+  <div class="brand-block" data-route="home" title="Home">
     <img id="brandLogo" class="brand-logo" alt="" />
     <div class="brand-text">
       <div class="brand-name" id="brandName"></div>
@@ -21,6 +21,9 @@
     </div>
   </div>
   <div class="header-actions">
+    <button class="icon-btn" data-route="home" title="Home">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11.5 12 4l8 7.5"/><path d="M6 10v9a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1v-9"/></svg>
+    </button>
     <button class="icon-btn" data-route="panel" title="Panel">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="7" height="7" rx="1.5"/><rect x="13" y="4" width="7" height="7" rx="1.5"/><rect x="4" y="13" width="7" height="7" rx="1.5"/><rect x="13" y="13" width="7" height="7" rx="1.5"/></svg>
     </button>
@@ -54,6 +57,13 @@
 </template>
 
 <template id="tpl-home">
+  <div class="backup-reminder" id="backupReminder" style="display:none">
+    <span id="lastBackupText"></span>
+    <span class="backup-reminder-actions">
+      <button class="backup-reminder-btn" data-route="panel/backup">Back up now</button>
+      <button class="backup-reminder-dismiss" id="dismissReminderBtn" title="Dismiss">&times;</button>
+    </span>
+  </div>
   <section class="hero">
     <h1 id="heroTagline"></h1>
     <p class="hero-sub" id="heroSubTagline"></p>

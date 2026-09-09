@@ -156,11 +156,17 @@ function renderHome() {
       <span class="category-icon">${cat.icon}</span>
       <span class="category-tile-name">${escapeHtml(cat.name)}</span>
     </div>
-  `).join("");
+  `).join("") + `
+    <div class="category-tile" data-academy="1">
+      <span class="category-icon">${icons.academy}</span>
+      <span class="category-tile-name">Academy</span>
+    </div>
+  `;
 
-  grid.querySelectorAll(".category-tile").forEach(tile => {
+  grid.querySelectorAll(".category-tile[data-cat]").forEach(tile => {
     tile.addEventListener("click", () => { location.hash = "#/category/" + tile.dataset.cat; });
   });
+  grid.querySelector("[data-academy]").addEventListener("click", () => { location.hash = "#/panel/academy"; });
 }
 
 // ---- Backup reminder ----
@@ -384,6 +390,7 @@ const icons = {
 function renderPanelDashboard() {
   const content = document.getElementById("panelContent");
   content.innerHTML = `
+    <button class="back-btn" data-route="home">&larr; Home</button>
     <h2>Panel</h2>
     <div class="admin-menu">
       <button class="admin-menu-btn" data-route="panel/clients"><span class="admin-menu-icon">${icons.client}</span><span>Client Details</span></button>
