@@ -1,4 +1,4 @@
-const CACHE_NAME = "glambook-v1";
+const CACHE_NAME = "glambook-v2";
 const PRECACHE = ["/", "/index.html", "/style.css", "/app.js", "/brand-config.js", "/categories-config.js", "/manifest.json"];
 
 self.addEventListener("install", (event) => {
@@ -17,13 +17,15 @@ self.addEventListener("activate", (event) => {
   self.clients.claim();
 });
 
-// Network-first: always try the network so updates show up immediately;
-// fall back to cache only when offline. Avoids the stale-cache bug from Kaarigar.
+// Network-first, and bypass the browser's ordinary HTTP cache too (not just
+// the service worker's) — GitHub Pages' default cache headers can otherwise
+// serve a stale file even when this fetch handler tries the network "first".
+// Falls back to the service worker cache only when truly offline.
 self.addEventListener("fetch", (event) => {
   if (event.request.method !== "GET") return;
 
   event.respondWith(
-    fetch(event.request)
+    fetch(event.request, { cache: "no-store" })
       .then((response) => {
         const clone = response.clone();
         caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
