@@ -76,6 +76,7 @@ export const categories = [
     id: "skin",
     name: "Skincare & Facials",
     icon: icon.skin,
+    image: "category-skin.jpg",
     groups: [
       {
         name: "Facial & Clean-ups",
