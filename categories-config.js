@@ -177,6 +177,7 @@ export const categories = [
     id: "body",
     name: "Body Treatments",
     icon: icon.body,
+    image: "category-body.jpg",
     groups: [
       {
         name: "Body Treatments",
