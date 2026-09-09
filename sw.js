@@ -1,5 +1,5 @@
-const CACHE_NAME = "glambook-v2";
-const PRECACHE = ["/", "/index.html", "/style.css", "/app.js", "/brand-config.js", "/categories-config.js", "/manifest.json"];
+const CACHE_NAME = "glambook-v3";
+const PRECACHE = ["/", "/index.html", "/style.css", "/app.js", "/brand-config.js", "/categories-config.js", "/manifest.json", "/logo.png"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(

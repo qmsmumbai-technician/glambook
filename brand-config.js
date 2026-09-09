@@ -8,18 +8,18 @@
 
 export const brand = {
   // Shown in the header, browser tab, and "Add to Home Screen" prompt.
-  appName: "GlamBook",
-  appNameAccent: "Book",   // the part of appName styled in the accent color, e.g. "Glam" + "Book"
+  appName: "Abode Digital Technology",
+  appNameAccent: "Technology",   // the part of appName styled in the accent color, e.g. "Abode Digital" + "Technology"
 
   // Path/URL to the parlour's logo — square image works best. Leave blank
   // to fall back to a plain initial badge.
-  logoUrl: "",
+  logoUrl: "logo.png",
 
-  tagline: "Look your best, on your terms.",
+  tagline: "Making Life Easier",
   subTagline: "Book a service at the salon, or have us come to you.",
 
   // Contact shown in the footer — replace with the parlour's own.
-  contactPhone: "",
+  contactPhone: "9860046593",
   contactAddress: "",
 
   // ============================================================
@@ -28,6 +28,10 @@ export const brand = {
   // aren't meant to be seen by anyone who picks up the phone).
   // ============================================================
   appPin: "1234",
+
+  // How many days between backups before the app shows a reminder
+  // banner on the home screen. Tap "Back up now" right there to clear it.
+  backupReminderDays: 3,
 
   colors: {
     primary: "#2E1520",     // header, headings, primary UI
