@@ -33,6 +33,19 @@ export const brand = {
   // banner on the home screen. Tap "Back up now" right there to clear it.
   backupReminderDays: 3,
 
+  // ============================================================
+  // CLOUD SYNC (optional) — lets you use the app from more than
+  // one device, one after another (not at the same time). Syncing
+  // sends/pulls the WHOLE snapshot each time — whichever device
+  // synced last "wins". See README for how to set up the Google
+  // Apps Script this connects to. Leave url blank to disable —
+  // the app works fully offline either way.
+  // ============================================================
+  sync: {
+    url: "",     // your deployed Apps Script Web App URL
+    secret: "",  // must match the SECRET value inside that script
+  },
+
   colors: {
     primary: "#2E1520",     // header, headings, primary UI
     primaryLight: "#4A2536",

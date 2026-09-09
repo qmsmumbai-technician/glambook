@@ -8,6 +8,10 @@
 // request") and get filled in directly in the app via the
 // inline price field on each item. Set a number here only if
 // you want a default to ship with.
+//
+// A category can optionally have an "image" field — a banner
+// photo shown at the top of that category's screen. Omit it
+// for categories that don't have one; the icon still shows.
 // ============================================================
 
 const icon = {
@@ -32,6 +36,7 @@ export const categories = [
     id: "hair",
     name: "Hair Services",
     icon: icon.hair,
+    image: "category-hair.jpg",
     groups: [
       {
         name: "Hair Cut",

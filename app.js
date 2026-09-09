@@ -253,6 +253,15 @@ function renderCategory() {
   document.getElementById("categoryIconLg").innerHTML = cat.icon;
   document.getElementById("categoryName").textContent = cat.name;
 
+  const banner = document.getElementById("categoryBanner");
+  if (cat.image) {
+    banner.src = cat.image;
+    banner.alt = cat.name;
+    banner.style.display = "block";
+  } else {
+    banner.style.display = "none";
+  }
+
   const wrap = document.getElementById("menuGroups");
   wrap.innerHTML = cat.groups.map(group => `
     <div class="menu-group">
