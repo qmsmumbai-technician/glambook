@@ -9,9 +9,11 @@
 // inline price field on each item. Set a number here only if
 // you want a default to ship with.
 //
-// A category can optionally have an "image" field — a banner
-// photo shown at the top of that category's screen. Omit it
-// for categories that don't have one; the icon still shows.
+// A category can optionally have an "image" field — a square
+// photo used on both the home screen tile (with the name
+// overlaid at the bottom) and as a banner at the top of that
+// category's own screen. Omit it for categories that don't
+// have one yet; they just fall back to the plain icon tile.
 // ============================================================
 
 const icon = {

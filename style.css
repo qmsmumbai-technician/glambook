@@ -167,6 +167,33 @@ main { max-width: 640px; margin: 0 auto; padding: 0 20px 60px; }
   line-height: 1.25;
 }
 
+.category-tile-photo {
+  position: relative;
+  aspect-ratio: 1 / 1;
+  padding: 0;
+  background-size: cover;
+  background-position: center;
+  overflow: hidden;
+  display: block;
+  border: none;
+}
+.category-tile-photo::after {
+  content: "";
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  height: 60%;
+  background: linear-gradient(to top, rgba(46,21,32,0.85), rgba(46,21,32,0));
+}
+.category-tile-name-overlay {
+  position: absolute;
+  left: 8px; right: 8px; bottom: 8px;
+  z-index: 1;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: #FBF6F1;
+  line-height: 1.25;
+}
+
 /* ===== Grouped item menu (category detail) ===== */
 .menu-view { padding: 24px 0; }
 .category-banner {

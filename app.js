@@ -151,7 +151,11 @@ function renderHome() {
   renderBackupReminder();
 
   const grid = document.getElementById("categoryGrid");
-  grid.innerHTML = categories.map(cat => `
+  grid.innerHTML = categories.map(cat => cat.image ? `
+    <div class="category-tile category-tile-photo" data-cat="${cat.id}" style="background-image:url('${cat.image}')">
+      <span class="category-tile-name-overlay">${escapeHtml(cat.name)}</span>
+    </div>
+  ` : `
     <div class="category-tile" data-cat="${cat.id}">
       <span class="category-icon">${cat.icon}</span>
       <span class="category-tile-name">${escapeHtml(cat.name)}</span>
