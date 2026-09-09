@@ -184,6 +184,12 @@ main { max-width: 640px; margin: 0 auto; padding: 0 20px 60px; }
   transform: rotate(45deg);
 }
 .menu-item-name { flex: 1; font-size: 15px; color: var(--ink); }
+.menu-item-name.service-link {
+  color: var(--rose-dark);
+  text-decoration: underline;
+  text-decoration-color: rgba(199,123,135,0.5);
+  cursor: pointer;
+}
 .price-field {
   display: flex; align-items: center; gap: 2px;
   flex-shrink: 0;
@@ -253,6 +259,18 @@ main { max-width: 640px; margin: 0 auto; padding: 0 20px 60px; }
 .error { color: #B44646; font-size: 13px; }
 .pin-view { max-width: 280px; margin: 40px auto 0; text-align: center; }
 .pin-view input { text-align: center; font-size: 22px; letter-spacing: 6px; }
+
+/* ===== Service write-up ===== */
+.note-view { padding: 24px 0; }
+.note-view h2 { font-family: var(--serif); color: var(--plum); margin: 0 0 2px; font-size: 22px; }
+.note-view textarea { min-height: 140px; }
+.note-prev-btn {
+  width: 100%;
+  margin-top: 10px;
+  padding: 12px;
+  text-align: center;
+  color: var(--muted);
+}
 
 /* ===== Admin ===== */
 .admin-view { padding: 24px 0; }

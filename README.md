@@ -5,7 +5,10 @@ This is a **private, single-user app** for you (the parlour owner) — not a cus
 ## How it works
 1. **Open the app → PIN screen.** Enter the PIN set in `brand-config.js` (`appPin`) to get in. Tap the lock icon in the header any time to re-lock it.
 2. **Home screen** — your logo, name, contact number up top; a grid of service categories below (Hair, Skincare, Grooming, etc.).
-3. **Tap a category** → itemized menu grouped the way you specified (e.g. Hair Cut / Hair Colouring / Hair Treatment). Each service has a checkbox and a price field side by side — tick the checkbox when a customer takes that service, and it's added to a running bill. Tap the price field to set or edit that service's price — saved instantly.
+3. **Tap a category** → itemized menu grouped the way you specified (e.g. Hair Cut / Hair Colouring / Hair Treatment). Each service has a checkbox, a name, and a price field:
+   - **Checkbox** — tick when a customer takes that service; adds it to a running bill.
+   - **Service name** (styled as a link) — tap to open a write-up screen for that service, where you can type notes and save them. Two buttons there: **Add & Save** (saves your text and returns) and **Previous Screen** (goes back without saving).
+   - **Price field** — tap to set or edit that service's price, saved instantly.
 4. **Bottom bar** appears once you've ticked at least one service, showing a running count and total — tap **Review & Bill** any time to jump to Bill Generation.
 5. **Panel icon** (top right, grid icon) → six tools:
    - **Client Details** — save clients (name, code, mobile, birthday, anniversary).
@@ -38,6 +41,7 @@ Everything is stored in this browser's local storage. That means:
 
 ## What's working
 - Categories → items → price editing (local)
+- Per-service write-up notes (local)
 - Tick services as customers take them → running bill total (bottom bar)
 - Client Details, Special Discount, Client History, Bill Generation, Reminder — all local
 - Backup & Restore

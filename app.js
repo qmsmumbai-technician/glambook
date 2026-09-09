@@ -10,6 +10,7 @@ if ("serviceWorker" in navigator) {
 const state = {
   route: "home",
   selectedCategory: null,
+  selectedNoteItem: null,
   panelSubroute: null,
   editingClientCode: null,
   billSelections: {},
@@ -133,6 +134,7 @@ function render() {
 
   if (state.route === "home") renderHome();
   else if (state.route === "category") renderCategory();
+  else if (state.route === "note") renderNote();
   else if (state.route === "panel") renderPanel();
   updateBillBar();
 }
@@ -197,7 +199,7 @@ function renderCategory() {
           <label class="menu-item-check">
             <input type="checkbox" class="service-check" data-id="${item.id}" ${state.billSelections[item.id] ? "checked" : ""}>
           </label>
-          <span class="menu-item-name">${escapeHtml(item.name)}</span>
+          <span class="menu-item-name service-link" data-noteid="${item.id}">${escapeHtml(item.name)}</span>
           <span class="price-field">
             <span class="rupee">₹</span>
             <input class="price-input" type="number" min="0" inputmode="numeric"
@@ -237,6 +239,51 @@ function renderCategory() {
     });
   });
 
+  wrap.querySelectorAll(".service-link").forEach(el => {
+    el.addEventListener("click", () => {
+      const id = el.dataset.noteid;
+      state.selectedNoteItem = { id, name: el.textContent, categoryName: cat.name, categoryId: cat.id };
+      location.hash = "#/note";
+    });
+  });
+
+}
+
+// ---- Service write-up / notes ----
+function getNotes() { return JSON.parse(localStorage.getItem("glambook_notes") || "{}"); }
+function getNote(id) { return getNotes()[id] || ""; }
+function saveNote(id, text) {
+  const notes = getNotes();
+  if (text) notes[id] = text; else delete notes[id];
+  localStorage.setItem("glambook_notes", JSON.stringify(notes));
+}
+
+function renderNote() {
+  const item = state.selectedNoteItem;
+  if (!item) { location.hash = "#/home"; return; }
+
+  app.innerHTML = `
+    <section class="note-view">
+      <h2>${escapeHtml(item.name)}</h2>
+      <p class="muted">${escapeHtml(item.categoryName || "")}</p>
+      <div class="field-group">
+        <label>Write-up</label>
+        <textarea id="noteText" rows="6" placeholder="Write anything about this service...">${escapeHtml(getNote(item.id))}</textarea>
+      </div>
+      <button class="primary-btn" id="noteSaveBtn">Add &amp; Save</button>
+      <button class="small-btn note-prev-btn" id="notePrevBtn">Previous Screen</button>
+    </section>
+  `;
+
+  document.getElementById("noteSaveBtn").addEventListener("click", () => {
+    const text = document.getElementById("noteText").value.trim();
+    saveNote(item.id, text);
+    toast("Saved");
+    location.hash = "#/category/" + item.categoryId;
+  });
+  document.getElementById("notePrevBtn").addEventListener("click", () => {
+    location.hash = "#/category/" + item.categoryId;
+  });
 }
 
 // ===== Panel =====
@@ -646,6 +693,7 @@ function collectBackupData() {
     exportedAt: new Date().toISOString(),
     appName: brand.appName,
     prices: JSON.parse(localStorage.getItem("glambook_prices") || "{}"),
+    notes: JSON.parse(localStorage.getItem("glambook_notes") || "{}"),
     clients: JSON.parse(localStorage.getItem("glambook_clients") || "{}"),
     discounts: JSON.parse(localStorage.getItem("glambook_discounts") || "{}"),
     bills: JSON.parse(localStorage.getItem("glambook_bills") || "[]"),
@@ -669,6 +717,7 @@ function restoreBackup(fileText) {
   try { data = JSON.parse(fileText); } catch { return false; }
   if (!data || typeof data !== "object") return false;
   localStorage.setItem("glambook_prices", JSON.stringify(data.prices || {}));
+  localStorage.setItem("glambook_notes", JSON.stringify(data.notes || {}));
   localStorage.setItem("glambook_clients", JSON.stringify(data.clients || {}));
   localStorage.setItem("glambook_discounts", JSON.stringify(data.discounts || {}));
   localStorage.setItem("glambook_bills", JSON.stringify(data.bills || []));
