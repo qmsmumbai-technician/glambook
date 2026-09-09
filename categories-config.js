@@ -107,6 +107,7 @@ export const categories = [
     id: "grooming",
     name: "Grooming & Hair Removal",
     icon: icon.grooming,
+    image: "category-grooming.jpg",
     groups: [
       {
         name: "Threading",
