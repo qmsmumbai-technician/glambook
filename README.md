@@ -27,12 +27,42 @@ For each new client, touch only these:
 2. **`categories-config.js`** — the service catalog: categories, groups, items. Prices start blank ("Set price") and get filled in live in the app.
 3. **`manifest.json`** — update `name`, `short_name`, `background_color`, `theme_color` to match.
 4. **`icon-192.png` / `icon-512.png`** — the client's logo, or a placeholder mark.
-5. Push to a new GitHub repo (or new branch), turn on Pages, done. No accounts to create, no consoles to configure.
+5. Turn on Pages for that new repo (see below), done. No accounts to create, no consoles to configure.
 
 ## Deploy to GitHub Pages
-1. Create a GitHub repo, upload all these files.
-2. Repo → Settings → Pages → source = your branch, root folder.
-3. Live at `https://<username>.github.io/<repo-name>/`.
+
+### First time only: set up your template
+1. Create a GitHub repo, upload all these files — this becomes your master copy.
+2. Repo → Settings → check **"Template repository"**.
+3. That's it — you never manually upload all 8 files again after this.
+
+### For every new parlour after that
+1. Go to your template repo → green **"Use this template"** button (top of the repo page) → **"Create a new repository"**.
+2. Name it for that client, create it — this instantly copies all 8 files into the new repo, no file-by-file upload needed.
+3. Edit just the 4 files listed in the checklist above (brand, categories, manifest, icons) for that client.
+4. New repo → Settings → Pages → source = your branch, root folder.
+5. Live at `https://<username>.github.io/<new-repo-name>/`.
+
+(If you'd rather not use a template — e.g. you're on a plan or account type without it — the older path still works: create a blank repo and upload all the files manually each time.)
+
+## Generating an installable .apk (no Play Store)
+You can hand a client an actual installable file instead of a link, using **PWABuilder** (pwabuilder.com, free, by Microsoft):
+
+1. Make sure the client's site is already live on GitHub Pages (previous section) — PWABuilder packages the *live* site, not local files.
+2. Confirm `icon-192.png` and `icon-512.png` actually exist in the repo (see checklist above) — PWABuilder needs these for the app icon.
+3. Go to pwabuilder.com, paste in the client's GitHub Pages URL.
+4. It scans the manifest and service worker and flags anything missing — fix those first if any show up.
+5. Choose **Android** → let it generate a signing key (or supply your own) → download the package.
+6. You get a `.apk` file. Send it to the client however you like (WhatsApp, email, USB) — no Play Store account, no app review, no listing.
+
+**What this actually is:** a thin Android wrapper ("Trusted Web Activity") that loads the live GitHub Pages site inside an app-like shell — it's not a fully bundled offline app. It needs internet on first load; the service worker's caching helps after that, same as the installed PWA already behaves.
+
+**What the client will see:** since this isn't from the Play Store, Android shows an **"install from unknown sources"** prompt the first time — normal for any sideloaded app, one tap to allow.
+
+**One per client:** the APK bakes in that specific GitHub Pages URL, so each client (their own repo + their own live URL) needs their own APK generated separately — one APK can't serve multiple client sites.
+
+## Backup reminders
+The home screen watches how long it's been since your last export (`brand.backupReminderDays`, default 3 days). When it's overdue, a banner appears at the top with a one-tap **Back up now** button — tap it to go straight to Backup & Restore, or the **×** to dismiss it for this session (it'll reappear next time you reopen the app). This isn't a fully automatic cloud backup like WhatsApp's — a plain web app can't silently upload files without a real backend integration — but it means you never have to remember to check, only to tap when reminded.
 
 ## Important limitation: this is single-device only
 Everything is stored in this browser's local storage. That means:
