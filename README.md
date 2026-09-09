@@ -5,18 +5,20 @@ This is a **private, single-user app** for you (the parlour owner) — not a cus
 ## How it works
 1. **Open the app → PIN screen.** Enter the PIN set in `brand-config.js` (`appPin`) to get in. Tap the lock icon in the header any time to re-lock it.
 2. **Home screen** — your logo, name, contact number up top; a grid of service categories below (Hair, Skincare, Grooming, etc.).
-3. **Tap a category** → itemized menu grouped the way you specified (e.g. Hair Cut / Hair Colouring / Hair Treatment). Each service has a checkbox, a name, and a price field:
+3. **Tap a category** → itemized menu grouped the way you specified (e.g. Hair Cut / Hair Colouring / Hair Treatment). Each service row has, left to right:
    - **Checkbox** — tick when a customer takes that service; adds it to a running bill.
    - **Service name** (styled as a link) — tap to open a write-up screen for that service, where you can type notes and save them. Two buttons there: **Add & Save** (saves your text and returns) and **Previous Screen** (goes back without saving).
+   - **"H" checkbox** — marks whether that service is offered as a home visit. Yours to decide per service; saved instantly, no effect on billing, just a reference marker.
    - **Price field** — tap to set or edit that service's price, saved instantly.
 4. **Bottom bar** appears once you've ticked at least one service, showing a running count and total — tap **Review & Bill** any time to jump to Bill Generation.
-5. **Panel icon** (top right, grid icon) → six tools:
+5. **Panel icon** (top right, grid icon) → seven tools:
    - **Client Details** — save clients (name, code, mobile, birthday, anniversary).
    - **Special Discount** — festival / anniversary discount notes, for your own reference.
    - **Client History** — look up a client by code, see their saved bills.
-   - **Bill Generation** — shows whatever you've ticked from the category menus, with a live subtotal. Enter the client code, add a discount ("10%" or "₹200") if you're giving one, remove anything with the ✕ if needed. Save it, or tap Confirm & Send to save and open WhatsApp/SMS with the itemized bill ready to send. Selections clear automatically after saving/sending, ready for the next customer.
+   - **Bill Generation** — shows whatever you've ticked from the category menus, with a live subtotal. Enter the client code, add **Additional Charges** if any (a flat ₹ amount, added after subtotal), then a **Discount** ("10%" or "₹200") if you're giving one — Final Total updates live as you fill these in. Remove anything with the ✕. Tap **Save Bill** to record it, **Discard** to clear everything without saving, or **Confirm & Send** to save and open WhatsApp/SMS with the itemized bill ready to send. Selections clear automatically after saving/sending/discarding, ready for the next customer.
    - **Reminder** — write a message and send it to a client (by mobile or code) via WhatsApp or SMS.
    - **Backup & Restore** — export everything to a `.json` file you can save elsewhere; restore from that file if you ever switch phones or lose data.
+   - **Academy** — a separate price list for training/course purposes. Shows every service across all categories with its own price field (independent of the regular customer price) and a **"D"** field for course duration (free text — "2-3 Month", etc.).
 
 ## About the "Send" buttons (WhatsApp/SMS)
 A plain web app can't silently auto-send SMS or WhatsApp messages — there's no browser permission for that without a paid gateway (Twilio for SMS, WhatsApp Business API for WhatsApp), both needing a backend server and per-message cost. What's built instead: tapping **Send via WhatsApp** or **Send via SMS** opens that app with your message pre-typed to the client's number — one more tap in WhatsApp/Messages actually sends it.
@@ -72,9 +74,12 @@ Everything is stored in this browser's local storage. That means:
 ## What's working
 - Categories → items → price editing (local)
 - Per-service write-up notes (local)
+- "H" home-service marker per service (local)
 - Tick services as customers take them → running bill total (bottom bar)
-- Client Details, Special Discount, Client History, Bill Generation, Reminder — all local
-- Backup & Restore
+- Bill Generation with Additional Charges + Discount + Discard
+- Academy — separate price + duration list for training purposes
+- Client Details, Special Discount, Client History, Reminder — all local
+- Backup & Restore (now includes H flags, Academy prices/durations)
 - PIN lock on app open
 
 ## Known gaps / next steps

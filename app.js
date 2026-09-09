@@ -148,6 +148,8 @@ function renderHome() {
   document.getElementById("heroTagline").textContent = brand.tagline;
   document.getElementById("heroSubTagline").textContent = brand.subTagline;
 
+  renderBackupReminder();
+
   const grid = document.getElementById("categoryGrid");
   grid.innerHTML = categories.map(cat => `
     <div class="category-tile" data-cat="${cat.id}">
@@ -158,6 +160,44 @@ function renderHome() {
 
   grid.querySelectorAll(".category-tile").forEach(tile => {
     tile.addEventListener("click", () => { location.hash = "#/category/" + tile.dataset.cat; });
+  });
+}
+
+// ---- Backup reminder ----
+function getLastBackupAt() {
+  const v = localStorage.getItem("glambook_last_backup");
+  return v ? Number(v) : null;
+}
+function setLastBackupAt(ts) { localStorage.setItem("glambook_last_backup", String(ts)); }
+
+function renderBackupReminder() {
+  const el = document.getElementById("backupReminder");
+  const dismissed = sessionStorage.getItem("glambook_reminder_dismissed") === "1";
+  if (dismissed) { el.style.display = "none"; return; }
+
+  const days = brand.backupReminderDays ?? 3;
+  const last = getLastBackupAt();
+  let due = false, text = "";
+
+  if (!last) {
+    due = true;
+    text = "You haven't backed up yet";
+  } else {
+    const elapsed = Math.floor((Date.now() - last) / (1000 * 60 * 60 * 24));
+    if (elapsed >= days) {
+      due = true;
+      text = elapsed === 0 ? "Back up recommended" : `Last backup ${elapsed} day${elapsed === 1 ? "" : "s"} ago`;
+    }
+  }
+
+  if (!due) { el.style.display = "none"; return; }
+  document.getElementById("lastBackupText").textContent = text;
+  el.style.display = "flex";
+
+  document.getElementById("dismissReminderBtn").addEventListener("click", (e) => {
+    e.stopPropagation();
+    sessionStorage.setItem("glambook_reminder_dismissed", "1");
+    el.style.display = "none";
   });
 }
 
@@ -177,6 +217,23 @@ function setStoredPrice(itemId, price) {
 function effectivePrice(item) {
   const stored = getStoredPrice(item.id);
   return stored !== null ? stored : item.price;
+}
+
+function getStoredHomeFlag(itemId) {
+  const raw = localStorage.getItem("glambook_home_flags");
+  const flags = raw ? JSON.parse(raw) : {};
+  return Object.prototype.hasOwnProperty.call(flags, itemId) ? flags[itemId] : null;
+}
+function setStoredHomeFlag(itemId, val) {
+  const raw = localStorage.getItem("glambook_home_flags");
+  const flags = raw ? JSON.parse(raw) : {};
+  flags[itemId] = val;
+  localStorage.setItem("glambook_home_flags", JSON.stringify(flags));
+}
+function effectiveHomeFlag(item) {
+  const stored = getStoredHomeFlag(item.id);
+  if (stored !== null) return stored;
+  return item.mode !== "salon";
 }
 
 function renderCategory() {
@@ -200,6 +257,10 @@ function renderCategory() {
             <input type="checkbox" class="service-check" data-id="${item.id}" ${state.billSelections[item.id] ? "checked" : ""}>
           </label>
           <span class="menu-item-name service-link" data-noteid="${item.id}">${escapeHtml(item.name)}</span>
+          <label class="flag-field" title="Available for Home service">
+            <span class="flag-label">H</span>
+            <input type="checkbox" class="home-check" data-id="${item.id}" ${effectiveHomeFlag(item) ? "checked" : ""}>
+          </label>
           <span class="price-field">
             <span class="rupee">₹</span>
             <input class="price-input" type="number" min="0" inputmode="numeric"
@@ -221,6 +282,13 @@ function renderCategory() {
         state.billSelections[input.dataset.priceFor].price = val;
         updateBillBar();
       }
+    });
+  });
+
+  wrap.querySelectorAll(".home-check").forEach(cb => {
+    cb.addEventListener("click", (e) => e.stopPropagation());
+    cb.addEventListener("change", () => {
+      setStoredHomeFlag(cb.dataset.id, cb.checked);
     });
   });
 
@@ -300,6 +368,7 @@ function renderPanel() {
   else if (sub === "bill") renderPanelBill();
   else if (sub === "reminder") renderPanelReminder();
   else if (sub === "backup") renderPanelBackup();
+  else if (sub === "academy") renderPanelAcademy();
 }
 
 const icons = {
@@ -309,6 +378,7 @@ const icons = {
   bill: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2V3Z"/><path d="M9 8h6M9 12h6"/></svg>`,
   reminder: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a5 5 0 0 0-5 5v3.5L5 15h14l-2-3.5V8a5 5 0 0 0-5-5Z"/><path d="M9.5 19a2.5 2.5 0 0 0 5 0"/></svg>`,
   backup: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11m0 0-3.5-3.5M12 15l3.5-3.5"/><path d="M5 16v2a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-2"/></svg>`,
+  academy: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 9 12 4l10 5-10 5-10-5Z"/><path d="M6 11.5V16c0 1.5 2.7 3 6 3s6-1.5 6-3v-4.5"/><path d="M22 9v6"/></svg>`,
 };
 
 function renderPanelDashboard() {
@@ -322,9 +392,85 @@ function renderPanelDashboard() {
       <button class="admin-menu-btn" data-route="panel/bill"><span class="admin-menu-icon">${icons.bill}</span><span>Bill Generation</span></button>
       <button class="admin-menu-btn" data-route="panel/reminder"><span class="admin-menu-icon">${icons.reminder}</span><span>Reminder</span></button>
       <button class="admin-menu-btn" data-route="panel/backup"><span class="admin-menu-icon">${icons.backup}</span><span>Backup & Restore</span></button>
+      <button class="admin-menu-btn" data-route="panel/academy"><span class="admin-menu-icon">${icons.academy}</span><span>Academy</span></button>
     </div>
     <p class="fine-print" style="margin-top:20px">Everything here is stored only on this device.</p>
   `;
+}
+
+// ---- Academy: separate price list + course duration ----
+function getStoredAcademyPrice(itemId) {
+  const raw = localStorage.getItem("glambook_academy_prices");
+  const prices = raw ? JSON.parse(raw) : {};
+  return Object.prototype.hasOwnProperty.call(prices, itemId) ? prices[itemId] : null;
+}
+function setStoredAcademyPrice(itemId, price) {
+  const raw = localStorage.getItem("glambook_academy_prices");
+  const prices = raw ? JSON.parse(raw) : {};
+  if (price === null) delete prices[itemId];
+  else prices[itemId] = price;
+  localStorage.setItem("glambook_academy_prices", JSON.stringify(prices));
+}
+function getStoredAcademyDuration(itemId) {
+  const raw = localStorage.getItem("glambook_academy_durations");
+  const durations = raw ? JSON.parse(raw) : {};
+  return Object.prototype.hasOwnProperty.call(durations, itemId) ? durations[itemId] : "";
+}
+function setStoredAcademyDuration(itemId, text) {
+  const raw = localStorage.getItem("glambook_academy_durations");
+  const durations = raw ? JSON.parse(raw) : {};
+  if (text) durations[itemId] = text; else delete durations[itemId];
+  localStorage.setItem("glambook_academy_durations", JSON.stringify(durations));
+}
+
+function renderPanelAcademy() {
+  const content = document.getElementById("panelContent");
+
+  const listHtml = categories.map(cat => `
+    <div class="menu-group">
+      <h3 class="menu-group-title">${escapeHtml(cat.name)}</h3>
+      ${cat.groups.map(g => `
+        ${g.name && g.name !== cat.name ? `<p class="academy-subgroup-title">${escapeHtml(g.name)}</p>` : ""}
+        ${g.items.map(item => `
+          <div class="academy-item-row">
+            <span class="academy-item-name">${escapeHtml(item.name)}</span>
+            <label class="flag-field academy-duration-field" title="Academic duration">
+              <span class="flag-label">D</span>
+              <input type="text" class="academy-duration-input" data-id="${item.id}"
+                placeholder="e.g. 2-3 Month"
+                value="${escapeHtml(getStoredAcademyDuration(item.id))}">
+            </label>
+            <span class="price-field">
+              <span class="rupee">₹</span>
+              <input class="price-input academy-price-input" type="number" min="0" inputmode="numeric"
+                data-id="${item.id}"
+                placeholder="Set price"
+                value="${getStoredAcademyPrice(item.id) ?? ""}">
+            </span>
+          </div>
+        `).join("")}
+      `).join("")}
+    </div>
+  `).join("");
+
+  content.innerHTML = `
+    <button class="back-btn" data-route="panel">&larr; Panel</button>
+    <h2>Academy</h2>
+    <p class="muted">Separate pricing and course duration for training purposes — independent of the regular service prices.</p>
+    ${listHtml}
+  `;
+
+  content.querySelectorAll(".academy-price-input").forEach(input => {
+    input.addEventListener("change", () => {
+      const val = input.value === "" ? null : Number(input.value);
+      setStoredAcademyPrice(input.dataset.id, val);
+    });
+  });
+  content.querySelectorAll(".academy-duration-input").forEach(input => {
+    input.addEventListener("change", () => {
+      setStoredAcademyDuration(input.dataset.id, input.value.trim());
+    });
+  });
 }
 
 // ---- Local CRM storage ----
@@ -502,6 +648,7 @@ function renderPanelHistory() {
             <strong>₹${b.totalAmount}</strong>
             <p class="muted">${b.date}</p>
             <p class="muted">${escapeHtml(b.servicesTaken)}</p>
+            ${b.additionalCharges ? `<p class="muted">Additional charges: ₹${b.additionalCharges}</p>` : ""}
             ${b.discount ? `<p class="muted">Discount applied: ${escapeHtml(b.discount)}</p>` : ""}
           </div>
         </div>
@@ -547,13 +694,20 @@ function renderPanelBill() {
     <div class="bill-summary">
       <div class="bill-summary-row"><span>Subtotal</span><span id="billSubtotal">₹0</span></div>
       <div class="field-group">
+        <label>Additional Charges</label>
+        <input id="billAdditional" type="number" min="0" placeholder="e.g. 50">
+      </div>
+      <div class="field-group">
         <label>Discount</label>
         <input id="billDiscount" placeholder="e.g. 10% or ₹200">
       </div>
       <div class="bill-summary-row bill-final"><span>Final Total</span><span id="billFinalTotal">₹0</span></div>
     </div>
 
-    <button class="primary-btn" id="saveBillBtn">Save Bill</button>
+    <div class="admin-actions" style="margin-top:16px">
+      <button class="primary-btn" id="saveBillBtn" style="margin-top:0">Save Bill</button>
+      <button class="small-btn danger" id="discardBillBtn">Discard</button>
+    </div>
     <div class="admin-actions" style="margin-top:12px">
       <button class="small-btn" id="sendBillWhatsApp">Confirm &amp; Send via WhatsApp</button>
       <button class="small-btn" id="sendBillSMS">Confirm &amp; Send via SMS</button>
@@ -561,6 +715,7 @@ function renderPanelBill() {
   `;
 
   const codeInput = document.getElementById("bCode");
+  const additionalInput = document.getElementById("billAdditional");
   const discountInput = document.getElementById("billDiscount");
   let saved = false;
 
@@ -582,29 +737,34 @@ function renderPanelBill() {
     const current = Object.entries(state.billSelections).map(([id, v]) => ({ id, ...v }));
     const subtotal = current.reduce((sum, i) => sum + (i.price || 0), 0);
 
+    const additional = parseFloat(additionalInput.value) || 0;
+    const withAdditional = subtotal + additional;
+
     const raw = discountInput.value.trim();
     let discountAmount = 0;
     if (raw.endsWith("%")) {
       const pct = parseFloat(raw);
-      if (!isNaN(pct)) discountAmount = (subtotal * pct) / 100;
+      if (!isNaN(pct)) discountAmount = (withAdditional * pct) / 100;
     } else if (raw) {
       const flat = parseFloat(raw.replace(/[^\d.]/g, ""));
       if (!isNaN(flat)) discountAmount = flat;
     }
 
-    const final = Math.max(0, Math.round(subtotal - discountAmount));
+    const final = Math.max(0, Math.round(withAdditional - discountAmount));
     document.getElementById("billSubtotal").textContent = "₹" + subtotal;
     document.getElementById("billFinalTotal").textContent = "₹" + final;
-    return { items: current, subtotal, discountAmount, final, raw };
+    return { items: current, subtotal, additional, discountAmount, final, raw };
   }
 
+  additionalInput.addEventListener("input", () => { saved = false; computeTotals(); });
   discountInput.addEventListener("input", () => { saved = false; computeTotals(); });
   computeTotals();
 
   function billMessage(totals) {
     const lines = totals.items.map(i => `- ${i.name} (${i.categoryName || "-"}): ₹${i.price ?? 0}`).join("\n");
+    const additionalLine = totals.additional ? `\nAdditional Charges: ₹${totals.additional}` : "";
     const discountLine = totals.discountAmount ? `\nDiscount: -₹${Math.round(totals.discountAmount)}` : "";
-    return `Hi! Here's your bill from ${brand.appName}:\n${lines}\nSubtotal: ₹${totals.subtotal}${discountLine}\nFinal Total: ₹${totals.final}\nThank you for visiting!`;
+    return `Hi! Here's your bill from ${brand.appName}:\n${lines}\nSubtotal: ₹${totals.subtotal}${additionalLine}${discountLine}\nFinal Total: ₹${totals.final}\nThank you for visiting!`;
   }
   function resolvedMobile() {
     const c = getClient(codeInput.value.trim());
@@ -614,6 +774,7 @@ function renderPanelBill() {
     saveBillRecord({
       clientCode: codeInput.value.trim(),
       servicesTaken: totals.items.map(i => `${i.name} (${i.categoryName || "-"})`).join(", "),
+      additionalCharges: totals.additional || null,
       totalAmount: totals.final,
       discount: totals.raw || null,
       date: new Date().toISOString().split("T")[0],
@@ -636,6 +797,11 @@ function renderPanelBill() {
     if (!validate(totals)) return;
     doSave(totals);
     toast("Bill saved");
+    finishAndReset();
+  });
+
+  document.getElementById("discardBillBtn").addEventListener("click", () => {
+    if (!confirm("Discard this bill? Everything ticked will be cleared without saving.")) return;
     finishAndReset();
   });
 
@@ -694,6 +860,9 @@ function collectBackupData() {
     appName: brand.appName,
     prices: JSON.parse(localStorage.getItem("glambook_prices") || "{}"),
     notes: JSON.parse(localStorage.getItem("glambook_notes") || "{}"),
+    homeFlags: JSON.parse(localStorage.getItem("glambook_home_flags") || "{}"),
+    academyPrices: JSON.parse(localStorage.getItem("glambook_academy_prices") || "{}"),
+    academyDurations: JSON.parse(localStorage.getItem("glambook_academy_durations") || "{}"),
     clients: JSON.parse(localStorage.getItem("glambook_clients") || "{}"),
     discounts: JSON.parse(localStorage.getItem("glambook_discounts") || "{}"),
     bills: JSON.parse(localStorage.getItem("glambook_bills") || "[]"),
@@ -718,6 +887,9 @@ function restoreBackup(fileText) {
   if (!data || typeof data !== "object") return false;
   localStorage.setItem("glambook_prices", JSON.stringify(data.prices || {}));
   localStorage.setItem("glambook_notes", JSON.stringify(data.notes || {}));
+  localStorage.setItem("glambook_home_flags", JSON.stringify(data.homeFlags || {}));
+  localStorage.setItem("glambook_academy_prices", JSON.stringify(data.academyPrices || {}));
+  localStorage.setItem("glambook_academy_durations", JSON.stringify(data.academyDurations || {}));
   localStorage.setItem("glambook_clients", JSON.stringify(data.clients || {}));
   localStorage.setItem("glambook_discounts", JSON.stringify(data.discounts || {}));
   localStorage.setItem("glambook_bills", JSON.stringify(data.bills || []));
@@ -742,6 +914,8 @@ function renderPanelBackup() {
 
   document.getElementById("exportBtn").addEventListener("click", () => {
     downloadBackup();
+    setLastBackupAt(Date.now());
+    sessionStorage.removeItem("glambook_reminder_dismissed");
     toast("Backup downloaded");
   });
 
@@ -754,8 +928,13 @@ function renderPanelBackup() {
     const reader = new FileReader();
     reader.onload = () => {
       const ok = restoreBackup(reader.result);
-      if (ok) toast("Restored — all data replaced");
-      else toast("That file doesn't look like a valid backup");
+      if (ok) {
+        setLastBackupAt(Date.now());
+        sessionStorage.removeItem("glambook_reminder_dismissed");
+        toast("Restored — all data replaced");
+      } else {
+        toast("That file doesn't look like a valid backup");
+      }
     };
     reader.onerror = () => toast("Couldn't read that file");
     reader.readAsText(file);

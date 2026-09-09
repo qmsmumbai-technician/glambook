@@ -73,6 +73,42 @@ button, input, textarea { font-family: inherit; }
 
 main { max-width: 640px; margin: 0 auto; padding: 0 20px 60px; }
 
+/* ===== Backup reminder ===== */
+.backup-reminder {
+  display: none;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  background: rgba(176,141,87,0.15);
+  border: 1px solid var(--gold);
+  border-radius: 10px;
+  padding: 10px 14px;
+  margin-top: 16px;
+  font-size: 13px;
+  color: var(--plum);
+}
+.backup-reminder-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.backup-reminder-btn {
+  background: var(--gold);
+  color: white;
+  border: none;
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.backup-reminder-dismiss {
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 2px;
+}
+
 /* ===== Hero ===== */
 .hero { padding: 40px 0 20px; }
 .hero h1 {
@@ -150,7 +186,7 @@ main { max-width: 640px; margin: 0 auto; padding: 0 20px 60px; }
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
+  gap: 8px;
   padding: 13px 0;
   border-bottom: 1px solid var(--border);
   cursor: pointer;
@@ -196,7 +232,7 @@ main { max-width: 640px; margin: 0 auto; padding: 0 20px 60px; }
 }
 .price-field .rupee { font-size: 14px; color: var(--muted); }
 .price-input {
-  width: 68px;
+  width: 58px;
   padding: 6px 8px;
   border: 1px solid var(--border);
   border-radius: 6px;
@@ -207,6 +243,62 @@ main { max-width: 640px; margin: 0 auto; padding: 0 20px 60px; }
 }
 .price-input::placeholder { color: var(--muted); font-size: 12px; }
 .price-input:focus { outline: 2px solid var(--rose); outline-offset: 1px; }
+
+/* ===== Flag field (H = Home service, D = Academy duration) ===== */
+.flag-field {
+  display: flex; align-items: center; gap: 4px;
+  flex-shrink: 0;
+}
+.flag-label {
+  font-size: 11px; font-weight: 700; color: var(--muted);
+  text-transform: uppercase;
+}
+.flag-field input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--border);
+  border-radius: 4px;
+  background: white;
+  cursor: pointer;
+  position: relative;
+  flex-shrink: 0;
+  margin: 0;
+}
+.flag-field input[type="checkbox"]:checked {
+  background: var(--gold);
+  border-color: var(--gold);
+}
+.flag-field input[type="checkbox"]:checked::after {
+  content: "";
+  position: absolute;
+  left: 5px; top: 1px;
+  width: 4px; height: 9px;
+  border: solid white;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+/* ===== Academy ===== */
+.academy-item-row {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 0; border-bottom: 1px solid var(--border);
+}
+.academy-item-name { flex: 1; font-size: 14px; color: var(--ink); }
+.academy-subgroup-title { font-size: 12px; color: var(--muted); margin: 10px 0 2px; text-transform: uppercase; letter-spacing: 0.03em; }
+.academy-duration-field { min-width: 96px; }
+.academy-duration-input {
+  width: 96px;
+  padding: 6px 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 12px;
+  background: white;
+  color: var(--plum);
+}
+.academy-duration-input::placeholder { color: var(--muted); font-size: 11px; }
+.academy-duration-input:focus { outline: 2px solid var(--rose); outline-offset: 1px; }
 
 .muted { color: var(--muted); }
 
@@ -321,6 +413,8 @@ main { max-width: 640px; margin: 0 auto; padding: 0 20px 60px; }
 }
 .admin-row-top { display: flex; justify-content: space-between; align-items: center; }
 .admin-actions { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+.admin-actions .primary-btn { flex: 1; min-width: 120px; }
+.admin-actions .small-btn { flex: 1; min-width: 100px; text-align: center; }
 .small-btn {
   border: 1px solid var(--border); background: white; padding: 5px 12px;
   border-radius: 6px; font-size: 12px; cursor: pointer;
