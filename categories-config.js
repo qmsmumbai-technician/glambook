@@ -130,6 +130,7 @@ export const categories = [
     id: "hands-feet",
     name: "Hands & Feet",
     icon: icon.hands,
+    image: "category-hands-feet.jpg",
     groups: [
       {
         name: "",
