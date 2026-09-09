@@ -440,6 +440,9 @@ function renderPanelAcademy() {
         ${g.name && g.name !== cat.name ? `<p class="academy-subgroup-title">${escapeHtml(g.name)}</p>` : ""}
         ${g.items.map(item => `
           <div class="academy-item-row">
+            <label class="menu-item-check">
+              <input type="checkbox" class="academy-check" data-id="${item.id}" ${state.billSelections["academy:" + item.id] ? "checked" : ""}>
+            </label>
             <span class="academy-item-name">${escapeHtml(item.name)}</span>
             <label class="flag-field academy-duration-field" title="Academic duration">
               <span class="flag-label">D</span>
@@ -463,7 +466,7 @@ function renderPanelAcademy() {
   content.innerHTML = `
     <button class="back-btn" data-route="panel">&larr; Panel</button>
     <h2>Academy</h2>
-    <p class="muted">Separate pricing and course duration for training purposes — independent of the regular service prices.</p>
+    <p class="muted">Separate pricing and course duration for training purposes — independent of the regular service prices. Tick a service to add it to the bill using its Academy price.</p>
     ${listHtml}
   `;
 
@@ -471,11 +474,34 @@ function renderPanelAcademy() {
     input.addEventListener("change", () => {
       const val = input.value === "" ? null : Number(input.value);
       setStoredAcademyPrice(input.dataset.id, val);
+      const key = "academy:" + input.dataset.id;
+      if (state.billSelections[key]) {
+        state.billSelections[key].price = val;
+        updateBillBar();
+      }
     });
   });
   content.querySelectorAll(".academy-duration-input").forEach(input => {
     input.addEventListener("change", () => {
       setStoredAcademyDuration(input.dataset.id, input.value.trim());
+    });
+  });
+  content.querySelectorAll(".academy-check").forEach(cb => {
+    cb.addEventListener("click", (e) => e.stopPropagation());
+    cb.addEventListener("change", () => {
+      const id = cb.dataset.id;
+      const key = "academy:" + id;
+      if (cb.checked) {
+        let itemName = "", catName = "";
+        categories.forEach(cat => cat.groups.forEach(g => {
+          const found = g.items.find(i => i.id === id);
+          if (found) { itemName = found.name; catName = cat.name; }
+        }));
+        state.billSelections[key] = { name: itemName, price: getStoredAcademyPrice(id), categoryName: `${catName} (Academy)` };
+      } else {
+        delete state.billSelections[key];
+      }
+      updateBillBar();
     });
   });
 }

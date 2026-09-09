@@ -73,6 +73,18 @@ button, input, textarea { font-family: inherit; }
 
 main { max-width: 640px; margin: 0 auto; padding: 0 20px 60px; }
 
+.app-footer {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 14px 20px 90px;
+  text-align: center;
+  font-size: 10.5px;
+  line-height: 1.5;
+  color: var(--muted);
+  border-top: 1px solid var(--border);
+  letter-spacing: 0.01em;
+}
+
 /* ===== Backup reminder ===== */
 .backup-reminder {
   display: none;
