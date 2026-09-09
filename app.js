@@ -1,5 +1,5 @@
 import { brand } from "./brand-config.js";
-import { categories } from "./categories-config.js";
+import { categories, academyImage } from "./categories-config.js";
 
 // ===== Register service worker =====
 if ("serviceWorker" in navigator) {
@@ -161,9 +161,8 @@ function renderHome() {
       <span class="category-tile-name">${escapeHtml(cat.name)}</span>
     </div>
   `).join("") + `
-    <div class="category-tile" data-academy="1">
-      <span class="category-icon">${icons.academy}</span>
-      <span class="category-tile-name">Academy</span>
+    <div class="category-tile category-tile-photo" data-academy="1" style="background-image:url('${academyImage}')">
+      <span class="category-tile-name-overlay">Academy</span>
     </div>
   `;
 
@@ -481,6 +480,7 @@ function renderPanelAcademy() {
 
   content.innerHTML = `
     <button class="back-btn" data-route="panel">&larr; Panel</button>
+    <img src="${academyImage}" alt="Academy" class="category-banner">
     <h2>Academy</h2>
     <p class="muted">Separate pricing and course duration for training purposes — independent of the regular service prices. Tick a service to add it to the bill using its Academy price.</p>
     ${listHtml}

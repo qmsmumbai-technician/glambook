@@ -190,3 +190,8 @@ export const categories = [
     ],
   },
 ];
+
+// Academy isn't part of the categories list above (it's a separate
+// Panel screen, not a bookable service category) — its home-tile
+// and banner photo live here separately.
+export const academyImage = "category-academy.jpg";
