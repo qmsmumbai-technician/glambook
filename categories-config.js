@@ -194,6 +194,7 @@ export const categories = [
     id: "mahendi",
     name: "Mahendi",
     icon: icon.mahendi,
+    image: "category-mahendi.jpg",
     groups: [
       {
         name: "",

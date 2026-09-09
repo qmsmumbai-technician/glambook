@@ -1,5 +1,5 @@
 const CACHE_NAME = "glambook-v4";
-const PRECACHE = ["./", "index.html", "style.css", "app.js", "brand-config.js", "categories-config.js", "manifest.json", "logo.png", "category-hair.jpg", "category-skin.jpg", "category-grooming.jpg", "category-hands-feet.jpg", "category-makeup.jpg", "category-body.jpg", "category-academy.jpg"];
+const PRECACHE = ["./", "index.html", "style.css", "app.js", "brand-config.js", "categories-config.js", "manifest.json", "logo.png", "category-hair.jpg", "category-skin.jpg", "category-grooming.jpg", "category-hands-feet.jpg", "category-makeup.jpg", "category-body.jpg", "category-academy.jpg", "category-mahendi.jpg"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
