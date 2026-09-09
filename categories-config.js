@@ -152,6 +152,7 @@ export const categories = [
     id: "makeup",
     name: "Special Occasion Makeup",
     icon: icon.makeup,
+    image: "category-makeup.jpg",
     groups: [
       {
         name: "Makeup & Special Package",
