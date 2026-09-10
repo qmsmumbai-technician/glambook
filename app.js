@@ -643,9 +643,9 @@ function renderPanelInventory() {
         return `
         <div class="inv-row" data-id="${it.id}">
           <input class="inv-desc-input" data-field="desc" value="${escapeHtml(it.desc)}" placeholder="Item name">
-          <input class="inv-num-input ${low ? "inv-low" : ""}" data-field="stock" type="number" min="0" value="${it.stock ?? ""}">
-          <input class="inv-num-input" data-field="minQty" type="number" min="0" value="${it.minQty ?? ""}">
-          <input class="inv-num-input" data-field="maxQty" type="number" min="0" value="${it.maxQty ?? ""}">
+          <input class="inv-num-input ${low ? "inv-low" : ""}" data-field="stock" type="text" inputmode="numeric" maxlength="2" value="${it.stock ?? ""}">
+          <input class="inv-num-input" data-field="minQty" type="text" inputmode="numeric" maxlength="2" value="${it.minQty ?? ""}">
+          <input class="inv-num-input" data-field="maxQty" type="text" inputmode="numeric" maxlength="2" value="${it.maxQty ?? ""}">
         </div>
       `;
       }).join("")}
@@ -676,6 +676,12 @@ function renderPanelInventory() {
   }
 
   content.querySelectorAll(".inv-row").forEach(row => {
+    row.querySelectorAll(".inv-num-input").forEach(input => {
+      input.addEventListener("input", () => {
+        input.value = input.value.replace(/\D/g, "").slice(0, 2);
+      });
+    });
+
     row.querySelectorAll("input").forEach(input => {
       input.addEventListener("change", () => {
         const invNow = getInventory();

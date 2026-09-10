@@ -449,7 +449,7 @@ main { max-width: 640px; margin: 0 auto; padding: 0 20px 60px; }
   margin-bottom: 2px;
 }
 .inv-col-desc { flex: 1; font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; }
-.inv-col-num { width: 60px; font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; text-align: center; }
+.inv-col-num { width: 44px; font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; text-align: right; }
 
 .inv-row {
   display: flex; align-items: center; gap: 6px;
@@ -461,12 +461,12 @@ main { max-width: 640px; margin: 0 auto; padding: 0 20px 60px; }
 }
 .inv-desc-input:focus { outline: 1px solid var(--rose); border-radius: 4px; }
 .inv-num-input {
-  width: 60px;
-  padding: 6px 4px;
+  width: 44px;
+  padding: 6px;
   border: 1px solid var(--border);
   border-radius: 6px;
   font-size: 13px;
-  text-align: center;
+  text-align: right;
   background: white;
   color: var(--plum);
 }
