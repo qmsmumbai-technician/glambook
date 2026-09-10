@@ -14,6 +14,7 @@ const state = {
   panelSubroute: null,
   editingClientCode: null,
   billSelections: {},
+  inventoryTab: "consumable",
 };
 
 const app = document.getElementById("app");
@@ -388,6 +389,8 @@ function renderPanel() {
   else if (sub === "backup") renderPanelBackup();
   else if (sub === "academy") renderPanelAcademy();
   else if (sub === "occasions") renderPanelOccasions();
+  else if (sub === "inventory") renderPanelInventory();
+  else if (sub === "reorder") renderPanelReorder();
 }
 
 const icons = {
@@ -398,6 +401,7 @@ const icons = {
   reminder: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a5 5 0 0 0-5 5v3.5L5 15h14l-2-3.5V8a5 5 0 0 0-5-5Z"/><path d="M9.5 19a2.5 2.5 0 0 0 5 0"/></svg>`,
   backup: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11m0 0-3.5-3.5M12 15l3.5-3.5"/><path d="M5 16v2a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-2"/></svg>`,
   academy: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 9 12 4l10 5-10 5-10-5Z"/><path d="M6 11.5V16c0 1.5 2.7 3 6 3s6-1.5 6-3v-4.5"/><path d="M22 9v6"/></svg>`,
+  inventory: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8 12 4l8 4-8 4-8-4Z"/><path d="M4 8v8l8 4 8-4V8"/><path d="M12 12v8"/></svg>`,
   occasions: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5" width="16" height="16" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/><path d="M12 14v4M10 16h4"/></svg>`,
 };
 
@@ -415,6 +419,7 @@ function renderPanelDashboard() {
       <button class="admin-menu-btn" data-route="panel/backup"><span class="admin-menu-icon">${icons.backup}</span><span>Backup & Restore</span></button>
       <button class="admin-menu-btn" data-route="panel/academy"><span class="admin-menu-icon">${icons.academy}</span><span>Academy</span></button>
       <button class="admin-menu-btn" data-route="panel/occasions"><span class="admin-menu-icon">${icons.occasions}</span><span>Upcoming Occasions</span></button>
+      <button class="admin-menu-btn" data-route="panel/inventory"><span class="admin-menu-icon">${icons.inventory}</span><span>Inventory</span></button>
     </div>
     <p class="fine-print" style="margin-top:20px">Everything here is stored only on this device.</p>
   `;
@@ -593,6 +598,164 @@ function renderPanelOccasions() {
   });
 }
 
+// ---- Inventory ----
+function getInventory() {
+  const raw = localStorage.getItem("glambook_inventory");
+  return raw ? JSON.parse(raw) : { consumable: [], nonConsumable: [] };
+}
+function saveInventory(data) {
+  localStorage.setItem("glambook_inventory", JSON.stringify(data));
+}
+function lowStockCount() {
+  const inv = getInventory();
+  const all = [...inv.consumable, ...inv.nonConsumable];
+  return all.filter(it => Number(it.stock) < Number(it.minQty)).length;
+}
+
+function renderPanelInventory() {
+  const content = document.getElementById("panelContent");
+  const inv = getInventory();
+  const tab = state.inventoryTab;
+  const items = tab === "consumable" ? inv.consumable : inv.nonConsumable;
+  const lowCount = lowStockCount();
+
+  content.innerHTML = `
+    <button class="back-btn" data-route="panel">&larr; Panel</button>
+    <h2>Inventory</h2>
+    ${lowCount > 0 ? `
+      <button class="reorder-banner" id="viewReorderBtn">
+        ${lowCount} item${lowCount > 1 ? "s" : ""} below Min Qty — View Reorder Sheet
+      </button>
+    ` : ""}
+    <div class="admin-menu-tabs">
+      <button class="inv-tab ${tab === "consumable" ? "active" : ""}" data-tab="consumable">Consumable Items</button>
+      <button class="inv-tab ${tab === "nonConsumable" ? "active" : ""}" data-tab="nonConsumable">Non-consumable Items</button>
+    </div>
+    <div class="inv-header-row">
+      <span class="inv-col-desc">Item Desc.</span>
+      <span class="inv-col-num">Stock</span>
+      <span class="inv-col-num">Min Qty</span>
+      <span class="inv-col-num">Max Qty</span>
+    </div>
+    <div id="invRows">
+      ${items.map(it => {
+        const low = Number(it.stock) < Number(it.minQty);
+        return `
+        <div class="inv-row" data-id="${it.id}">
+          <input class="inv-desc-input" data-field="desc" value="${escapeHtml(it.desc)}" placeholder="Item name">
+          <input class="inv-num-input ${low ? "inv-low" : ""}" data-field="stock" type="number" min="0" value="${it.stock ?? ""}">
+          <input class="inv-num-input" data-field="minQty" type="number" min="0" value="${it.minQty ?? ""}">
+          <input class="inv-num-input" data-field="maxQty" type="number" min="0" value="${it.maxQty ?? ""}">
+        </div>
+      `;
+      }).join("")}
+    </div>
+    <button class="add-item-link" id="addInvItemBtn">+ Add item</button>
+  `;
+
+  if (lowCount > 0) {
+    document.getElementById("viewReorderBtn").addEventListener("click", () => {
+      location.hash = "#/panel/reorder";
+    });
+  }
+
+  content.querySelectorAll(".inv-tab").forEach(btn => {
+    btn.addEventListener("click", () => {
+      state.inventoryTab = btn.dataset.tab;
+      renderPanelInventory();
+    });
+  });
+
+  function fieldsFor(row) {
+    return {
+      desc: row.querySelector('[data-field="desc"]').value.trim(),
+      stock: Number(row.querySelector('[data-field="stock"]').value) || 0,
+      minQty: Number(row.querySelector('[data-field="minQty"]').value) || 0,
+      maxQty: Number(row.querySelector('[data-field="maxQty"]').value) || 0,
+    };
+  }
+
+  content.querySelectorAll(".inv-row").forEach(row => {
+    row.querySelectorAll("input").forEach(input => {
+      input.addEventListener("change", () => {
+        const invNow = getInventory();
+        const list = tab === "consumable" ? invNow.consumable : invNow.nonConsumable;
+        const idx = list.findIndex(i => i.id === row.dataset.id);
+        if (idx === -1) return;
+        list[idx] = { ...list[idx], ...fieldsFor(row) };
+        saveInventory(invNow);
+
+        const stockInput = row.querySelector('[data-field="stock"]');
+        const low = Number(list[idx].stock) < Number(list[idx].minQty);
+        stockInput.classList.toggle("inv-low", low);
+
+        const banner = document.getElementById("viewReorderBtn");
+        const newCount = lowStockCount();
+        if (newCount > 0 && !banner) renderPanelInventory();
+        else if (newCount === 0 && banner) renderPanelInventory();
+      });
+    });
+  });
+
+  document.getElementById("addInvItemBtn").addEventListener("click", () => {
+    const invNow = getInventory();
+    const list = tab === "consumable" ? invNow.consumable : invNow.nonConsumable;
+    list.push({
+      id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random(),
+      desc: "",
+      stock: 0,
+      minQty: 0,
+      maxQty: 0,
+    });
+    saveInventory(invNow);
+    renderPanelInventory();
+  });
+}
+
+function renderPanelReorder() {
+  const content = document.getElementById("panelContent");
+  const inv = getInventory();
+  const all = [...inv.consumable, ...inv.nonConsumable];
+  const toOrder = all
+    .filter(it => Number(it.stock) < Number(it.minQty))
+    .map(it => ({ desc: it.desc || "(unnamed item)", orderQty: Number(it.minQty) - Number(it.stock) }));
+
+  content.innerHTML = `
+    <button class="back-btn" data-route="panel/inventory">&larr; Inventory</button>
+    <h2>Reorder Sheet</h2>
+    <p class="muted">Stock is below Min Qty for these items.</p>
+    ${toOrder.length === 0 ? `<p class="muted">Nothing needs reordering right now.</p>` : `
+      <div class="inv-header-row">
+        <span class="inv-col-desc">Item Desc.</span>
+        <span class="inv-col-num" style="width:70px">Order Qty</span>
+      </div>
+      ${toOrder.map(it => `
+        <div class="reorder-row">
+          <span>${escapeHtml(it.desc)}</span>
+          <span class="reorder-qty">${it.orderQty}</span>
+        </div>
+      `).join("")}
+      <div class="admin-actions" style="margin-top:16px">
+        <button class="small-btn" id="reorderWhatsApp">Send via WhatsApp</button>
+        <button class="small-btn" id="reorderSMS">Send via SMS</button>
+      </div>
+    `}
+  `;
+
+  if (toOrder.length > 0) {
+    function reorderMessage() {
+      const lines = toOrder.map(it => `- ${it.desc}: ${it.orderQty}`).join("\n");
+      return `Reorder list from ${brand.appName}:\n${lines}`;
+    }
+    document.getElementById("reorderWhatsApp").addEventListener("click", () => {
+      sendViaWhatsAppGeneric(reorderMessage());
+    });
+    document.getElementById("reorderSMS").addEventListener("click", () => {
+      sendViaSMSGeneric(reorderMessage());
+    });
+  }
+}
+
 // ---- Local CRM storage ----
 function getClients() { return JSON.parse(localStorage.getItem("glambook_clients") || "{}"); }
 function saveClientRecord(client) {
@@ -634,6 +797,14 @@ function sendViaWhatsApp(mobile, message) {
 function sendViaSMS(mobile, message) {
   if (!mobile) return toast("Enter a valid mobile number first");
   window.location.href = `sms:${mobile}?body=${encodeURIComponent(message)}`;
+}
+// No specific recipient (e.g. a supplier) — opens WhatsApp/Messages with a
+// contact picker instead of a fixed number.
+function sendViaWhatsAppGeneric(message) {
+  window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`, "_blank");
+}
+function sendViaSMSGeneric(message) {
+  window.location.href = `sms:?body=${encodeURIComponent(message)}`;
 }
 
 // ---- Client Details ----
@@ -989,6 +1160,7 @@ function collectBackupData() {
     clients: JSON.parse(localStorage.getItem("glambook_clients") || "{}"),
     discounts: JSON.parse(localStorage.getItem("glambook_discounts") || "{}"),
     bills: JSON.parse(localStorage.getItem("glambook_bills") || "[]"),
+    inventory: JSON.parse(localStorage.getItem("glambook_inventory") || "{}"),
   };
 }
 function downloadBackup() {
@@ -1016,6 +1188,7 @@ function restoreBackup(fileText) {
   localStorage.setItem("glambook_clients", JSON.stringify(data.clients || {}));
   localStorage.setItem("glambook_discounts", JSON.stringify(data.discounts || {}));
   localStorage.setItem("glambook_bills", JSON.stringify(data.bills || []));
+  localStorage.setItem("glambook_inventory", JSON.stringify(data.inventory || {}));
   return true;
 }
 
