@@ -528,6 +528,7 @@ main { max-width: 640px; margin: 0 auto; padding: 0 20px 60px; }
   color: var(--rose-dark);
 }
 .admin-menu-icon svg { width: 20px; height: 20px; }
+.admin-menu-icon-photo { background-size: cover; background-position: center; }
 
 .admin-list-row {
   border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px;
