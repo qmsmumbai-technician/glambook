@@ -15,7 +15,7 @@ export const brand = {
   // to fall back to a plain initial badge.
   logoUrl: "logo.png",
 
-  tagline: "Making Life Easier",
+  tagline: "Look Your Best, On Your Terms",
   subTagline: "Book a service at the salon, or have us come to you.",
 
   // Contact shown in the footer — replace with the parlour's own.
@@ -26,8 +26,31 @@ export const brand = {
   // APP PIN — required every time the app is opened, since this
   // is a private tool for you only (client details, bills, etc.
   // aren't meant to be seen by anyone who picks up the phone).
+  //
+  // appPin   = the client/demo PIN. If a trial is enabled below,
+  //            using THIS pin is what starts that device's 3-day
+  //            countdown — recorded on that device only, the
+  //            first time it's typed there.
+  // masterPin = your own PIN. Never starts or is affected by any
+  //            trial countdown, on any device, ever — use this
+  //            when demoing from your own phone.
   // ============================================================
   appPin: "1234",
+  masterPin: "4773",
+
+  // ============================================================
+  // TRIAL — when enabled, entering appPin on a given device starts
+  // a countdown on THAT device (stored locally there, not shared).
+  // Once `days` have passed since that device's first use of
+  // appPin, it shows a "trial ended" message instead of unlocking.
+  // masterPin always bypasses this entirely, on every device.
+  // Set enabled: false once a client has actually purchased —
+  // rebuild their APK with that change and the lock is gone.
+  // ============================================================
+  trial: {
+    enabled: true,
+    days: 3,
+  },
 
   // How many days between backups before the app shows a reminder
   // banner on the home screen. Tap "Back up now" right there to clear it.

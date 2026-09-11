@@ -396,52 +396,52 @@ main { max-width: 640px; margin: 0 auto; padding: 0 20px 60px; }
 .login-view h2 { font-family: var(--serif); color: var(--plum); }
 .fine-print { font-size: 12px; color: var(--muted); margin-top: 10px; }
 .error { color: #B44646; font-size: 13px; }
-.pin-view { max-width: 280px; margin: 40px auto 0; text-align: center; }
+.pin-view { max-width: 280px; margin: 0 auto 0; padding-top: 12px; text-align: center; }
 .pin-view input { text-align: center; font-size: 22px; letter-spacing: 6px; }
 
-.pin-top-block { margin-bottom: 28px; }
+.pin-top-block { margin-bottom: 14px; }
 .pin-top-icon {
-  width: 160px;
-  height: 160px;
+  width: 96px;
+  height: 96px;
   object-fit: contain;
   display: block;
-  margin: 0 auto 14px;
-  border-radius: 28px;
+  margin: 0 auto 8px;
+  border-radius: 20px;
 }
 .pin-top-name {
   font-family: var(--serif);
-  font-size: 19px;
+  font-size: 16px;
   font-weight: 600;
   color: var(--plum);
 }
 
 .pin-brand-block {
-  margin-top: 44px;
-  padding-top: 28px;
+  margin-top: 20px;
+  padding-top: 16px;
   border-top: 1px solid var(--border);
 }
 .pin-brand-name {
   font-family: var(--serif);
-  font-size: 19px;
+  font-size: 16px;
   font-weight: 600;
   color: var(--plum);
-  margin-bottom: 16px;
+  margin-bottom: 8px;
 }
 .pin-brand-logo {
-  width: 150px;
-  height: 150px;
+  width: 90px;
+  height: 90px;
   object-fit: contain;
   display: block;
-  margin: 0 auto 18px;
+  margin: 0 auto 8px;
 }
 .pin-brand-credit {
-  font-size: 12px;
+  font-size: 11px;
   color: var(--muted);
-  line-height: 1.5;
-  margin: 0 0 6px;
+  line-height: 1.4;
+  margin: 0 0 4px;
 }
 .pin-brand-copyright {
-  font-size: 10.5px;
+  font-size: 9.5px;
   color: var(--muted);
   margin: 0;
 }

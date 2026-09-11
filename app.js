@@ -55,7 +55,7 @@ function renderPinLock() {
   const tpl = document.getElementById("tpl-pin");
   app.innerHTML = "";
   app.appendChild(tpl.content.cloneNode(true));
-  document.querySelector(".topbar").style.visibility = "hidden";
+  document.querySelector(".topbar").style.display = "none";
 
   if (isTrialExpired()) {
     document.querySelector(".pin-view p.muted").textContent =
@@ -95,7 +95,7 @@ function renderPinLock() {
       return;
     }
 
-    document.querySelector(".topbar").style.visibility = "visible";
+    document.querySelector(".topbar").style.display = "flex";
     applyBrand();
     render();
   };
