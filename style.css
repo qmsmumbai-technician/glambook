@@ -399,6 +399,22 @@ main { max-width: 640px; margin: 0 auto; padding: 0 20px 60px; }
 .pin-view { max-width: 280px; margin: 40px auto 0; text-align: center; }
 .pin-view input { text-align: center; font-size: 22px; letter-spacing: 6px; }
 
+.pin-top-block { margin-bottom: 28px; }
+.pin-top-icon {
+  width: 160px;
+  height: 160px;
+  object-fit: contain;
+  display: block;
+  margin: 0 auto 14px;
+  border-radius: 28px;
+}
+.pin-top-name {
+  font-family: var(--serif);
+  font-size: 19px;
+  font-weight: 600;
+  color: var(--plum);
+}
+
 .pin-brand-block {
   margin-top: 44px;
   padding-top: 28px;
@@ -412,8 +428,8 @@ main { max-width: 640px; margin: 0 auto; padding: 0 20px 60px; }
   margin-bottom: 16px;
 }
 .pin-brand-logo {
-  width: 120px;
-  height: 120px;
+  width: 150px;
+  height: 150px;
   object-fit: contain;
   display: block;
   margin: 0 auto 18px;
