@@ -35,22 +35,69 @@ function lockApp() {
   render();
 }
 
+// ---- Trial (client PIN only — masterPin always bypasses this) ----
+function getTrialStart() {
+  const v = localStorage.getItem("glambook_trial_start");
+  return v ? Number(v) : null;
+}
+function trialDaysElapsed() {
+  const start = getTrialStart();
+  if (start === null) return null;
+  return Math.floor((Date.now() - start) / 86400000);
+}
+function isTrialExpired() {
+  if (!brand.trial || !brand.trial.enabled) return false;
+  const elapsed = trialDaysElapsed();
+  return elapsed !== null && elapsed >= brand.trial.days;
+}
+
 function renderPinLock() {
   const tpl = document.getElementById("tpl-pin");
   app.innerHTML = "";
   app.appendChild(tpl.content.cloneNode(true));
   document.querySelector(".topbar").style.visibility = "hidden";
 
+  if (isTrialExpired()) {
+    document.querySelector(".pin-view p.muted").textContent =
+      `Trial period ended. Contact ${brand.appName} to continue using this app — ${brand.contactPhone}`;
+  }
+
+  document.getElementById("pinBrandName").textContent = brand.appName;
+  if (brand.logoUrl) document.getElementById("pinBrandLogo").src = brand.logoUrl;
+  document.getElementById("pinBrandCopyright").textContent =
+    `© ${new Date().getFullYear()} ${brand.appName} - All rights reserved.`;
+
   const input = document.getElementById("pinInput");
   const tryUnlock = () => {
-    if (input.value === brand.appPin) {
+    const val = input.value;
+    const trialOn = brand.trial && brand.trial.enabled;
+
+    if (val === brand.masterPin) {
       unlock();
-      document.querySelector(".topbar").style.visibility = "visible";
-      applyBrand();
-      render();
+    } else if (val === brand.appPin) {
+      if (trialOn) {
+        if (getTrialStart() === null) {
+          localStorage.setItem("glambook_trial_start", String(Date.now()));
+          unlock();
+        } else if (isTrialExpired()) {
+          document.getElementById("pinError").textContent =
+            `Trial period ended. Contact ${brand.appName} — ${brand.contactPhone}`;
+          input.value = "";
+          return;
+        } else {
+          unlock();
+        }
+      } else {
+        unlock();
+      }
     } else {
       document.getElementById("pinError").textContent = "Wrong PIN";
+      return;
     }
+
+    document.querySelector(".topbar").style.visibility = "visible";
+    applyBrand();
+    render();
   };
   document.getElementById("pinConfirmBtn").addEventListener("click", tryUnlock);
   input.addEventListener("keydown", (e) => { if (e.key === "Enter") tryUnlock(); });

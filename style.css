@@ -399,6 +399,37 @@ main { max-width: 640px; margin: 0 auto; padding: 0 20px 60px; }
 .pin-view { max-width: 280px; margin: 40px auto 0; text-align: center; }
 .pin-view input { text-align: center; font-size: 22px; letter-spacing: 6px; }
 
+.pin-brand-block {
+  margin-top: 44px;
+  padding-top: 28px;
+  border-top: 1px solid var(--border);
+}
+.pin-brand-name {
+  font-family: var(--serif);
+  font-size: 19px;
+  font-weight: 600;
+  color: var(--plum);
+  margin-bottom: 16px;
+}
+.pin-brand-logo {
+  width: 120px;
+  height: 120px;
+  object-fit: contain;
+  display: block;
+  margin: 0 auto 18px;
+}
+.pin-brand-credit {
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.5;
+  margin: 0 0 6px;
+}
+.pin-brand-copyright {
+  font-size: 10.5px;
+  color: var(--muted);
+  margin: 0;
+}
+
 /* ===== Service write-up ===== */
 .note-view { padding: 24px 0; }
 .note-view h2 { font-family: var(--serif); color: var(--plum); margin: 0 0 2px; font-size: 22px; }
