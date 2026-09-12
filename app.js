@@ -464,7 +464,6 @@ function renderPanelDashboard() {
       <button class="admin-menu-btn" data-route="panel/bill"><span class="admin-menu-icon">${icons.bill}</span><span>Bill Generation</span></button>
       <button class="admin-menu-btn" data-route="panel/reminder"><span class="admin-menu-icon">${icons.reminder}</span><span>Reminder</span></button>
       <button class="admin-menu-btn" data-route="panel/backup"><span class="admin-menu-icon">${icons.backup}</span><span>Backup & Restore</span></button>
-      <button class="admin-menu-btn" data-route="panel/academy"><span class="admin-menu-icon">${icons.academy}</span><span>Academy</span></button>
       <button class="admin-menu-btn" data-route="panel/occasions"><span class="admin-menu-icon">${icons.occasions}</span><span>Upcoming Occasions</span></button>
       <button class="admin-menu-btn" data-route="panel/inventory"><span class="admin-menu-icon admin-menu-icon-photo" style="background-image:url('category-inventory.jpg')"></span><span>Inventory</span></button>
     </div>
