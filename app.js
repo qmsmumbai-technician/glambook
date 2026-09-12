@@ -31,7 +31,7 @@ function isUnlocked() { return sessionStorage.getItem("glambook_unlocked") === "
 function unlock() { sessionStorage.setItem("glambook_unlocked", "1"); }
 function lockApp() {
   sessionStorage.removeItem("glambook_unlocked");
-  location.hash = "#/home";
+  navigate("#/home");
   render();
 }
 
@@ -141,6 +141,16 @@ function setRoute(route) {
   render();
 }
 
+// Navigate without piling up browser history — every in-app hash change
+// REPLACES the current history entry instead of pushing a new one. Without
+// this, each tap (category, bill, panel screen...) stacks up as a separate
+// "page," so the phone's back button just walks back through dozens of
+// internal screens instead of closing the app, and can land on stale
+// states (like an unexpected PIN re-prompt) along the way.
+function navigate(hash) {
+  location.replace(hash);
+}
+
 window.addEventListener("hashchange", () => {
   const hash = location.hash.replace("#/", "") || "home";
   if (hash.startsWith("category/")) {
@@ -160,7 +170,7 @@ window.addEventListener("hashchange", () => {
 
 document.body.addEventListener("click", (e) => {
   const btn = e.target.closest("[data-route]");
-  if (btn) location.hash = "#/" + btn.dataset.route;
+  if (btn) navigate("#/" + btn.dataset.route);
 });
 
 document.getElementById("lockBtn").addEventListener("click", lockApp);
@@ -215,9 +225,9 @@ function renderHome() {
   `;
 
   grid.querySelectorAll(".category-tile[data-cat]").forEach(tile => {
-    tile.addEventListener("click", () => { location.hash = "#/category/" + tile.dataset.cat; });
+    tile.addEventListener("click", () => { navigate("#/category/" + tile.dataset.cat); });
   });
-  grid.querySelector("[data-academy]").addEventListener("click", () => { location.hash = "#/panel/academy"; });
+  grid.querySelector("[data-academy]").addEventListener("click", () => { navigate("#/panel/academy"); });
 }
 
 // ---- Backup reminder ----
@@ -295,7 +305,7 @@ function effectiveHomeFlag(item) {
 
 function renderCategory() {
   const cat = state.selectedCategory;
-  if (!cat) { location.hash = "#/home"; return; }
+  if (!cat) { navigate("#/home"); return; }
 
   const tpl = document.getElementById("tpl-category");
   app.innerHTML = "";
@@ -377,7 +387,7 @@ function renderCategory() {
     el.addEventListener("click", () => {
       const id = el.dataset.noteid;
       state.selectedNoteItem = { id, name: el.textContent, categoryName: cat.name, categoryId: cat.id };
-      location.hash = "#/note";
+      navigate("#/note");
     });
   });
 
@@ -394,7 +404,7 @@ function saveNote(id, text) {
 
 function renderNote() {
   const item = state.selectedNoteItem;
-  if (!item) { location.hash = "#/home"; return; }
+  if (!item) { navigate("#/home"); return; }
 
   app.innerHTML = `
     <section class="note-view">
@@ -413,10 +423,10 @@ function renderNote() {
     const text = document.getElementById("noteText").value.trim();
     saveNote(item.id, text);
     toast("Saved");
-    location.hash = "#/category/" + item.categoryId;
+    navigate("#/category/" + item.categoryId);
   });
   document.getElementById("notePrevBtn").addEventListener("click", () => {
-    location.hash = "#/category/" + item.categoryId;
+    navigate("#/category/" + item.categoryId);
   });
 }
 
@@ -701,7 +711,7 @@ function renderPanelInventory() {
 
   if (lowCount > 0) {
     document.getElementById("viewReorderBtn").addEventListener("click", () => {
-      location.hash = "#/panel/reorder";
+      navigate("#/panel/reorder");
     });
   }
 
