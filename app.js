@@ -530,7 +530,7 @@ function renderPanelAcademy() {
   `).join("");
 
   content.innerHTML = `
-    <button class="back-btn" data-route="panel">&larr; Panel</button>
+    <button class="back-btn" data-route="home">&larr; Home</button>
     <img src="${academyImage}" alt="Academy" class="category-banner">
     <h2>Academy</h2>
     <p class="muted">Separate pricing and course duration for training purposes — independent of the regular service prices. Tick a service to add it to the bill using its Academy price.</p>
