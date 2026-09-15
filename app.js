@@ -62,8 +62,6 @@ function renderPinLock() {
       `Trial period ended. Contact ${brand.appName} to continue using this app — ${brand.contactPhone}`;
   }
 
-  document.getElementById("pinBrandName").textContent = brand.appName;
-  if (brand.logoUrl) document.getElementById("pinBrandLogo").src = brand.logoUrl;
   document.getElementById("pinBrandCopyright").textContent =
     `© ${new Date().getFullYear()} ${brand.appName} - All rights reserved.`;
 

@@ -416,23 +416,17 @@ main { max-width: 640px; margin: 0 auto; padding: 0 20px 60px; }
 }
 
 .pin-brand-block {
-  margin-top: 20px;
-  padding-top: 16px;
+  margin-top: 16px;
+  padding-top: 14px;
   border-top: 1px solid var(--border);
 }
-.pin-brand-name {
-  font-family: var(--serif);
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--plum);
-  margin-bottom: 8px;
-}
-.pin-brand-logo {
-  width: 90px;
-  height: 90px;
-  object-fit: contain;
+.pin-brand-collage {
+  width: 280px;
+  height: 280px;
+  object-fit: cover;
+  border-radius: 10px;
   display: block;
-  margin: 0 auto 8px;
+  margin: 0 auto 10px;
 }
 .pin-brand-credit {
   font-size: 11px;

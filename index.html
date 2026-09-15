@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -11,12 +10,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
 </head>
-  <body>
-
-<video id="splashVideo" autoplay muted playsinline
-  style="position:fixed; top:0; left:0; width:100%; height:100%; object-fit:cover; z-index:9999; background:#FBF6F1;">
-  <source src="glambook-splash-animation.mp4" type="video/mp4">
-</video>
+<body>
 
 <header class="topbar">
   <div class="brand-block" data-route="home" title="Home">
@@ -68,8 +62,7 @@
     <p class="error" id="pinError"></p>
 
     <div class="pin-brand-block">
-      <div class="pin-brand-name" id="pinBrandName"></div>
-      <img id="pinBrandLogo" class="pin-brand-logo" alt="">
+      <img src="brand-collage.jpg" alt="Abode Digital Technology" class="pin-brand-collage">
       <p class="pin-brand-credit">App Designed &amp; Developed By - Abode Digital Technology - Mobile - 9860046593</p>
       <p class="pin-brand-copyright" id="pinBrandCopyright"></p>
     </div>
@@ -113,11 +106,5 @@
 </template>
 
 <script type="module" src="app.js"></script>
-<script>
-  const splash = document.getElementById('splashVideo');
-  splash.addEventListener('ended', () => {
-    splash.style.display = 'none';
-  });
-</script>
 </body>
 </html>
