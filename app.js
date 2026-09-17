@@ -1,6 +1,17 @@
 import { brand } from "./brand-config.js";
 import { categories, academyImage } from "./categories-config.js";
-
+// ===== Splash screen =====
+document.addEventListener('DOMContentLoaded', function () {
+  var splash = document.getElementById('splashScreen');
+  var video = document.getElementById('splashVideo');
+  function hideSplash() { if (splash) splash.style.display = 'none'; }
+  if (video) {
+    video.addEventListener('ended', hideSplash);
+    setTimeout(hideSplash, 4000);
+  } else {
+    hideSplash();
+  }
+});
 // ===== Register service worker =====
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => navigator.serviceWorker.register("sw.js"));
